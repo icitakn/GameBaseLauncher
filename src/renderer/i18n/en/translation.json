@@ -1,0 +1,238 @@
+{
+  "about": {
+    "dialogs": {
+      "mit": "MIT License",
+      "3rd": "Third party licenses"
+    },
+    "name": "Name",
+    "version": "Version",
+    "licensed_under": "Licensed under",
+    "licenses": "Licenses"
+  },
+  "buttons": {
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "ok": "OK",
+    "no": "No",
+    "yes": "Yes",
+    "saving": "Saving...",
+    "play": "Play"
+  },
+  "home": "Home",
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "tabs": {
+      "general": "General",
+      "about": "About"
+    }
+  },
+  "menu": {
+    "games": "Games",
+    "artists": "Artists",
+    "musicians": "Musicians",
+    "programmers": "Programmers",
+    "publishers": "Publishers",
+    "developers": "Developers",
+    "crackers": "Crackers",
+    "musics": "Musics",
+    "gb_settings": "GB settings",
+    "add_gamebase": "Add a new Gamebase",
+    "app_settings": "App settings"
+  },
+  "dashboard": {
+    "games_played": "Games played",
+    "play_time": "Play time",
+    "no_of_gamebases": "Number of Gamebases",
+    "recently_played_games": "Recently played games",
+    "no_games_played": "No games played yet",
+    "recently_played_music": "Recently played music",
+    "no_music_played": "No music played yet"
+  },
+  "gamebase": {
+    "menuitem_add": "Select a gamebase",
+    "add": "Create or import a gamebase",
+    "edit": "Edit gamebase",
+    "delete_gamebase": "Delete Gamebase",
+    "select_importMdb": "Import an old mdb Gamebase into a new db Gamebase",
+    "select_importDb": "Import an existing db Gamebase or create an empty one",
+    "form_fields": {
+      "name": "Name",
+      "importfile": "Import mdb file",
+      "db_file": "Database file",
+      "emulator": "Emulator",
+      "music_player": "Music player",
+      "extract_zip_to": "Extract zip to",
+      "games_folder": "Games folder",
+      "images_folder": "Images folder",
+      "music_folder": "Music folder",
+      "photos_folder": "Photos folder"
+    },
+    "errors": {
+      "name_required": "Please enter a name.",
+      "dbfile_required": "Please provide an existing db file or enter the name of a new one."
+    },
+    "messages": {
+      "confirm_delete": "Are you sure you want to delete this gamebase?",
+      "importing": "Importing...",
+      "import_failed": "Import failed"
+    },
+    "tabs": {
+      "general": "General",
+      "genres": "Genres",
+      "languages": "Languages",
+      "difficulties": "Difficulties",
+      "rarities": "Rarities",
+      "licenses": "Licenses"
+    }
+  },
+  "game": {
+    "play": "Play game",
+    "music": "Play music",
+    "release": "Release",
+    "developer": "Developer",
+    "programmer": "Programmer",
+    "musician": "Musician",
+    "artist": "Artist",
+    "publisher": "Publisher",
+    "cracker": "Cracker",
+    "year": "Year",
+    "genre": "Genre",
+    "player_number": "Number of players",
+    "player_number_min": "Number of players (Min)",
+    "player_number_max": "Number of players (Max)",
+    "simultaneously": "Simultaneously",
+    "control": "Control",
+    "language": "Language",
+    "rarity": "Rarity",
+    "license": "License",
+    "prequel": "Prequel",
+    "sequel": "Sequel",
+    "clone_of": "Clone of",
+    "related_to": "Related to",
+    "review_rating": "Review rating",
+    "filename": "Filename / Archive name",
+    "runnable": "Runnable file in the archive",
+    "file_on_disk": "File on disk",
+    "music_file": "Music file",
+    "screenshot_file": "Screenshot filename",
+    "no_trainers": "No. Trainers",
+    "game_length": "Game Length ('0' or '?' = Unknown)",
+    "length_type": "Length Type",
+    "playable": "Playable",
+    "titlescreen": "Titlescreen",
+    "original": "Original",
+    "included_docs": "Included Docs",
+    "loading_screen": "Loading Screen",
+    "highscore_saver": "High Score Saver",
+    "true_drive_emu": "True Drive Emulation",
+    "download_name": "Download Name",
+    "download_url": "Download URL",
+    "version_comment": "Version Comment",
+    "difficulty": "Difficulty",
+    "rating": "Rating",
+    "adult": "Adult Game",
+    "favorite": "Favorite Game",
+    "notes": "Notes",
+    "messages": {
+      "screenshots": "To view screenshots, set the image folder in the gamebase settings!"
+    }
+  },
+  "forms": {
+    "title": {
+      "add": "Add a new entry",
+      "edit": "Edit an entry"
+    },
+    "messages": {
+      "save_success": "Successfully saved!",
+      "save_error": "Error while saving: "
+    },
+    "fields": {
+      "id": "ID",
+      "name": "Name"
+    },
+    "musician": {
+      "fields": {
+        "photo": "Photo",
+        "grp": "Group",
+        "nick": "Nick"
+      }
+    },
+    "music": {
+      "fields": {
+        "game": "Game",
+        "filename": "Filename",
+        "musician": "Musician",
+        "fav": "Favorite",
+        "adult": "Adult"
+      }
+    },
+    "game": {
+      "errors": {
+        "required": {
+          "musician": "Please select a musician or (Unknown)."
+        }
+      },
+      "fields": {
+        "ratings": {
+          "unknown": "?/5 Unknown",
+          "terrible": "1/5 Terrible",
+          "poor": "2/5 Poor",
+          "average": "3/5 Average",
+          "quite_good": "4/5 Quite Good",
+          "very_good": "5/5 Very Good",
+          "classic": "Classic"
+        }
+      },
+      "tabs": {
+        "game": "Game",
+        "files": "Files",
+        "version": "Version",
+        "personal": "Personal"
+      }
+    }
+  },
+  "selected_panel": {
+    "games": "Related Games"
+  },
+  "common": {
+    "entries": "entries",
+    "dates": {
+      "just_now": "Just now",
+      "minutes_ago": "{{number}} minutes ago",
+      "hours_ago": "{{number}} hours ago",
+      "one_day_ago": "1 day ago",
+      "days_ago": "{{number}} days ago",
+      "one_week_ago": "1 week ago",
+      "weeks_ago": "{{number}} weeks ago",
+      "one_month_ago": "1 month ago",
+      "months_ago": "{{number}} months ago"
+    },
+    "starting": "Starting",
+    "welcome": "Welcome!",
+    "error_occured": "An error occured: ",
+    "confirm_delete": "Are you sure you want to delete this entry?",
+    "delete_success": "Deletion successful",
+    "delete_failed": "Deletion failed"
+  },
+  "file_dialog": {
+    "title": "Select",
+    "preselected_not_found": "Could not find the preselected file. A base path may be required to navigate to this location.",
+    "back": "Back",
+    "home": "Home",
+    "archive_mode": "Archive Mode",
+    "search": "Search...",
+    "current_folder": "Current folder",
+    "no_results_for": "No results for",
+    "folder_empty": "This folder is empty",
+    "selected": "Selected",
+    "select": "Select",
+    "select_folder": "Select folder"
+  },
+  "genre": {
+    "parent": "Parent genre"
+  }
+}
