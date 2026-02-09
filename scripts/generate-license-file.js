@@ -11,7 +11,8 @@ checker.init(
       version: '',
       licenses: '',
       repository: '',
-      publisher: ''
+      publisher: '',
+      licenseFile: ''
     }
   },
   async (err, packages) => {
@@ -26,13 +27,30 @@ checker.init(
     for (const [key, pkg] of Object.entries(packages)) {
       output += `${pkg.name}@${pkg.version}\n`
       output += `License: ${pkg.licenses}\n`
+
       if (pkg.repository) {
         output += `Repository: ${pkg.repository}\n`
       }
       if (pkg.publisher) {
         output += `Publisher: ${pkg.publisher}\n`
       }
-      output += '\n' + '-'.repeat(80) + '\n\n'
+
+      output += '\n'
+
+      if (pkg.licenseFile) {
+        try {
+          const licenseText = await fs.readFile(pkg.licenseFile, 'utf-8')
+          output += 'License Text:\n'
+          output += '-'.repeat(40) + '\n'
+          output += licenseText.trim() + '\n'
+        } catch (readErr) {
+          output += 'License Text: (could not read license file)\n'
+        }
+      } else {
+        output += 'License Text: (no license file found)\n'
+      }
+
+      output += '\n' + '='.repeat(80) + '\n\n'
     }
 
     await fs.writeFile('THIRD_PARTY_LICENSES.txt', output)
