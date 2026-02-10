@@ -5020,7 +5020,7 @@ THE SOFTWARE.
 
 ================================================================================
 
-gbl@0.1.0
+gamebaselauncher@0.1.0
 License: MIT*
 
 License Text:

@@ -43,7 +43,7 @@ npm --version    # Any recent version
 
    ```bash
    git clone <repository-url>
-   cd gbl
+   cd GameBaseLauncher
    ```
 
 2. **Install dependencies**

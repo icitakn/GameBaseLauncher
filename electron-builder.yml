@@ -1,5 +1,5 @@
 appId: com.electron.app
-productName: gbl
+productName: gamebaselauncher
 directories:
   buildResources: build
 files:
@@ -15,7 +15,7 @@ extraResources:
 asarUnpack:
   - resources/**
 win:
-  executableName: gbl
+  executableName: gamebaselauncher
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
