@@ -12,6 +12,11 @@ import {
 import { checkImportFile } from '../services/database.service'
 import { GameDTO } from '@shared/models/form-schemes.model'
 import path from 'path'
+import { promisify } from 'util'
+import { exec } from 'child_process'
+import * as os from 'os'
+import { readdirSync } from 'fs'
+import log from 'electron-log'
 
 export const registerFileController = () => {
   ipcMain.handle('file:getOrCreateSettings', async () => {
@@ -60,4 +65,76 @@ export const registerFileController = () => {
       return result
     }
   )
+
+  const execAsync = promisify(exec)
+
+  ipcMain.handle('file:getAvailableDrives', async () => {
+    const platform = os.platform()
+
+    if (platform === 'win32') {
+      // Windows: Use WMIC to get drive list
+      try {
+        const { stdout } = await execAsync('wmic logicaldisk get name,description,volumename')
+        const lines = stdout.split('\n').filter((line) => line.trim())
+        const drives: { path: string; label: string; description: string }[] = []
+
+        // Skip header line
+        for (let i = 1; i < lines.length; i++) {
+          const match = lines[i].match(/([^\s]+)\s+([A-Z]:)/)
+          if (match) {
+            const description = match[1]
+            const letter = match[2]
+            drives.push({
+              path: `${letter}\\`,
+              label: `${letter}`,
+              description: description === 'Local' ? 'Local Disk' : description
+            })
+          }
+        }
+        return drives
+      } catch (error) {
+        log.error('Error getting Windows drives:', error)
+        return [{ path: 'C:\\', label: 'C:', description: 'Local Disk' }]
+      }
+    } else if (platform === 'darwin') {
+      // macOS: Check /Volumes
+      try {
+        const volumesPath = '/Volumes'
+        const volumes = readdirSync(volumesPath)
+
+        return volumes.map((volume) => ({
+          path: `/Volumes/${volume}`,
+          label: volume,
+          description: 'Volume'
+        }))
+      } catch (error) {
+        log.error('Error getting macOS volumes:', error)
+        return [{ path: '/', label: 'Root', description: 'Root' }]
+      }
+    } else {
+      // Linux/Unix: Return common mount points
+      try {
+        const { stdout } = await execAsync('df -h | grep "^/"')
+        const lines = stdout.split('\n').filter((line) => line.trim())
+        const mounts: { path: string; label: string; description: string }[] = []
+
+        for (const line of lines) {
+          const parts = line.split(/\s+/)
+          if (parts.length >= 6) {
+            const mountPoint = parts[5]
+            mounts.push({
+              path: mountPoint,
+              label: mountPoint === '/' ? 'Root' : mountPoint.split('/').pop() || mountPoint,
+              description: 'Mount Point'
+            })
+          }
+        }
+
+        return mounts.length > 0 ? mounts : [{ path: '/', label: 'Root', description: 'Root' }]
+      } catch (error) {
+        log.error('Error getting Linux mounts:', error)
+        return [{ path: '/', label: 'Root', description: 'Root' }]
+      }
+    }
+  })
 }

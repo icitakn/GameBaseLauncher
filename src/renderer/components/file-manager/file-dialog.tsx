@@ -20,7 +20,10 @@ import {
   InputAdornment,
   Divider,
   Paper,
-  Alert
+  Alert,
+  Select,
+  MenuItem,
+  FormControl
 } from '@mui/material'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
@@ -29,7 +32,8 @@ import {
   faFileArchive,
   faFolder,
   faHome,
-  faSearch
+  faSearch,
+  faHardDrive
 } from '@fortawesome/free-solid-svg-icons'
 import { t } from 'i18next'
 import { SEPARATOR } from '@shared/consts'
@@ -66,6 +70,12 @@ export const FileDialog = ({
   // Refs for Auto-Scroll
   const listRef = useRef<HTMLUListElement>(null)
   const preselectedItemRef = useRef<HTMLLIElement>(null)
+
+  // State for available drives
+  const [availableDrives, setAvailableDrives] = useState<
+    Array<{ path: string; label: string; description: string }>
+  >([])
+  const [selectedDrive, setSelectedDrive] = useState<string>('')
 
   // Helper function to normalize path
   const normalizePath = (p: string): string => {
@@ -161,6 +171,42 @@ export const FileDialog = ({
   const [isArchiveMode, setIsArchiveMode] = useState(!!archiveFile)
   const [preselectionDone, setPreselectionDone] = useState(false)
   const [showRootPathWarning, setShowRootPathWarning] = useState(false)
+
+  // Load available drives when dialog opens (only if not in archive mode)
+  useEffect(() => {
+    console.log(
+      'Drive loading effect - open:',
+      open,
+      'isArchiveMode:',
+      isArchiveMode,
+      'rootPath:',
+      rootPath
+    )
+    if (open && !isArchiveMode) {
+      window.electron
+        .getAvailableDrives()
+        .then((drives) => {
+          console.log('Loaded drives:', drives)
+          setAvailableDrives(drives)
+
+          // Set initial selected drive based on current path
+          const currentDrive = drives.find((d) => currentPath.startsWith(d.path))
+          console.log('Current drive match:', currentDrive, 'for path:', currentPath)
+          if (currentDrive) {
+            setSelectedDrive(currentDrive.path)
+          } else if (drives.length > 0) {
+            setSelectedDrive(drives[0].path)
+          }
+        })
+        .catch((error) => {
+          console.error('Error loading drives:', error)
+          // Fallback to default drive
+          const defaultDrive = window.navigator.platform.startsWith('Win') ? 'C:\\' : '/'
+          setAvailableDrives([{ path: defaultDrive, label: defaultDrive, description: 'Default' }])
+          setSelectedDrive(defaultDrive)
+        })
+    }
+  }, [open, isArchiveMode])
 
   // Reset all state values when opening
   useEffect(() => {
@@ -384,12 +430,28 @@ export const FileDialog = ({
     const normalizedPath = normalizePath(path)
 
     // Check if navigation is allowed
+    // When rootPath is set, allow navigation to different drives but treat each drive root as the new boundary
     if (!isWithinRootPath(normalizedPath) && !isArchiveMode) {
-      return // Navigation outside root path not allowed
+      // If we're switching to a different drive, check if it's in the available drives list
+      const targetDrive = availableDrives.find((d) => normalizedPath.startsWith(d.path))
+      if (targetDrive) {
+        // Allow navigation to other drives - the drive root becomes the effective rootPath
+        console.log('Switching to different drive:', targetDrive.path)
+      } else {
+        return // Navigation outside allowed drives not permitted
+      }
     }
 
     setCurrentPath(normalizedPath)
     setSelectedItems([]) // Reset selection on navigation
+
+    // Update selected drive if path changes to different drive
+    if (!isArchiveMode && availableDrives.length > 0) {
+      const newDrive = availableDrives.find((d) => normalizedPath.startsWith(d.path))
+      if (newDrive && newDrive.path !== selectedDrive) {
+        setSelectedDrive(newDrive.path)
+      }
+    }
 
     // If user navigates manually, disable preselection
     if (!isAutoNavigation) {
@@ -413,24 +475,54 @@ export const FileDialog = ({
       const rootSegments = getRootPathSegments()
       const currentSegments = getPathSegments(currentPath)
 
-      // Check if we are already in the root directory
-      if (currentSegments.length <= rootSegments.length) {
+      // Check if we are at drive root when rootPath is a drive
+      const currentDrive = availableDrives.find((d) => currentPath.startsWith(d.path))
+      const rootDrive = availableDrives.find((d) => rootPath.startsWith(d.path))
+
+      // If rootPath is a drive root and we're at that drive root, don't allow going up
+      if (
+        currentDrive &&
+        rootDrive &&
+        currentDrive.path === rootDrive.path &&
+        currentPath === currentDrive.path
+      ) {
+        return
+      }
+
+      // Check if we are already in the root directory (same drive, at root level)
+      if (
+        currentSegments.length <= rootSegments.length &&
+        currentDrive &&
+        rootDrive &&
+        currentDrive.path === rootDrive.path
+      ) {
         return // Already in root or above - no navigation up possible
       }
 
-      // Navigate one level up, but not beyond root
+      // Navigate one level up, but not beyond drive root
       const newSegments = currentSegments.slice(0, -1)
-      const parentPath =
-        (window.navigator.platform.startsWith('Win') ? '' : '/') + newSegments.join(SEPARATOR)
-      navigateTo(parentPath || rootPath)
+      if (newSegments.length === 0 && currentDrive) {
+        // Navigate to drive root
+        navigateTo(currentDrive.path)
+      } else {
+        const parentPath =
+          (window.navigator.platform.startsWith('Win') ? '' : '/') + newSegments.join(SEPARATOR)
+        navigateTo(parentPath || (currentDrive ? currentDrive.path : rootPath))
+      }
     } else {
       // Standard navigation without root restriction
       if (segments.length > 1) {
         const parentPath =
           (window.navigator.platform.startsWith('Win') ? '' : '/') + segments.slice(0, -1).join('/')
         navigateTo(parentPath)
-      } else if (currentPath !== '/') {
-        navigateTo(window.navigator.platform.startsWith('Win') ? 'C:\\' : '/')
+      } else if (currentPath !== '/' && !currentPath.match(/^[A-Z]:\\$/i)) {
+        // Navigate to drive root if not already there
+        const driveMatch = currentPath.match(/^([A-Z]:)/i)
+        if (driveMatch) {
+          navigateTo(driveMatch[1] + '\\')
+        } else {
+          navigateTo('/')
+        }
       }
     }
   }
@@ -440,9 +532,18 @@ export const FileDialog = ({
       navigateTo('/')
     } else if (rootPath) {
       navigateTo(rootPath)
+    } else if (selectedDrive) {
+      navigateTo(selectedDrive)
     } else {
       navigateTo(window.navigator.platform.startsWith('Win') ? 'C:\\' : '/')
     }
+  }
+
+  // Handle drive selection change
+  const handleDriveChange = (event: any): void => {
+    const newDrive = event.target.value
+    setSelectedDrive(newDrive)
+    navigateTo(newDrive)
   }
 
   const handleItemClick = (name: string, item: any): void => {
@@ -502,12 +603,34 @@ export const FileDialog = ({
     }
 
     if (rootPath) {
+      const currentDrive = availableDrives.find((d) => currentPath.startsWith(d.path))
+      const rootDrive = availableDrives.find((d) => rootPath.startsWith(d.path))
+
+      // If rootPath is a drive root and we're at that drive root, disable up button
+      if (
+        currentDrive &&
+        rootDrive &&
+        currentDrive.path === rootDrive.path &&
+        currentPath === currentDrive.path
+      ) {
+        return true
+      }
+
       const rootSegments = getRootPathSegments()
       const currentSegments = getPathSegments(currentPath)
-      return currentSegments.length <= rootSegments.length
+
+      // If on same drive as rootPath and at or above root level, disable
+      if (currentDrive && rootDrive && currentDrive.path === rootDrive.path) {
+        return currentSegments.length <= rootSegments.length
+      }
+
+      // If on different drive, disable only at drive root
+      return currentDrive ? currentPath === currentDrive.path : false
     }
 
-    return currentPath === '/' || currentPath === 'C:\\'
+    // Disable if at drive root (e.g., C:\ or /)
+    const isDriveRoot = currentPath.match(/^[A-Z]:\\$/i) || currentPath === '/'
+    return !!isDriveRoot
   }
 
   // Helper function to check if an item is preselected
@@ -568,7 +691,7 @@ export const FileDialog = ({
             underline="hover"
             sx={{ fontSize: '0.875rem' }}
           >
-            {rootPath ? 'Root' : 'Root'}
+            {rootPath ? 'Root' : selectedDrive || 'Root'}
           </Link>
           {visibleSegments.map((segment: string, index: number) => {
             // Build the path correctly
@@ -633,6 +756,16 @@ export const FileDialog = ({
     }
   }
 
+  // Show drive selector only if not in archive mode
+  const showDriveSelector = !isArchiveMode && availableDrives.length > 1
+
+  console.log('showDriveSelector:', showDriveSelector, {
+    isArchiveMode,
+    rootPath,
+    availableDrivesLength: availableDrives.length,
+    availableDrives
+  })
+
   return (
     <Dialog
       open={open}
@@ -671,6 +804,44 @@ export const FileDialog = ({
           <Alert severity="warning" sx={{ mb: 2 }} onClose={() => setShowRootPathWarning(false)}>
             {t('translation:file_dialog.preselected_not_found')}
           </Alert>
+        )}
+
+        {/* Drive Selector - only show when applicable */}
+        {showDriveSelector && (
+          <Box sx={{ mb: 2 }}>
+            <FormControl size="small" fullWidth>
+              <Select
+                value={selectedDrive}
+                onChange={handleDriveChange}
+                startAdornment={
+                  <InputAdornment position="start" sx={{ ml: 1 }}>
+                    <FontAwesomeIcon icon={faHardDrive} style={{ fontSize: '0.9rem' }} />
+                  </InputAdornment>
+                }
+                sx={{ fontSize: '0.875rem' }}
+              >
+                {availableDrives.map((drive) => (
+                  <MenuItem key={drive.path} value={drive.path} sx={{ fontSize: '0.875rem' }}>
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <Typography variant="body2">
+                        {drive.label}
+                        {drive.description && (
+                          <Typography
+                            component="span"
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ ml: 1 }}
+                          >
+                            ({drive.description})
+                          </Typography>
+                        )}
+                      </Typography>
+                    </Box>
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
         )}
 
         <Paper variant="outlined" sx={{ p: 1, mb: 2 }}>
