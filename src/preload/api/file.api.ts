@@ -9,5 +9,6 @@ export const fileApi = {
     ipcRenderer.invoke('file:loadImages', game, gamebaseId),
   readDir: (path: string) => ipcRenderer.invoke('file:readDir', path),
   readFile: (file: string, path: string, archive?: string) =>
-    ipcRenderer.invoke('file:readFile', file, path, archive)
+    ipcRenderer.invoke('file:readFile', file, path, archive),
+  getAvailableDrives: () => ipcRenderer.invoke('file:getAvailableDrives')
 }
