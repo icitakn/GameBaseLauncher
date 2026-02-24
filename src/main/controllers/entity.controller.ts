@@ -75,6 +75,10 @@ const getPopulates = (tableName: string) => {
   return populate
 }
 
+const SLIM_FIELDS: Partial<Record<string, string[]>> = {
+  Game: ['id', 'name']
+}
+
 export const registerEntityController = () => {
   ipcMain.handle(
     'entity:getAll',
@@ -93,7 +97,6 @@ export const registerEntityController = () => {
         const result = await getAllBatched(db, tableName, filter, populate, {
           batchSize: 5000,
           onProgress: (loaded, total) => {
-            // send progress to frontend
             event.sender.send('entity:loadProgress', {
               tableName,
               loaded,
@@ -107,6 +110,34 @@ export const registerEntityController = () => {
       } else {
         return await getAll(db, tableName, filter, populate)
       }
+    }
+  )
+
+  ipcMain.handle(
+    'entity:getSlim',
+    async (event, tableName: string, gamebaseId: UUID, fields?: string[]) => {
+      const { db } = await loadGamebase(gamebaseId)
+
+      const populateOptions: FindOptions<any, any, PopulatePath.ALL, never> = {}
+
+      const effectiveFields = fields ?? SLIM_FIELDS[tableName]
+      if (effectiveFields) {
+        Object.assign(populateOptions, { fields: effectiveFields })
+      }
+
+      const result = await getAllBatched(db, tableName, {}, populateOptions, {
+        batchSize: 5000,
+        onProgress: (loaded, total) => {
+          event.sender.send('entity:loadProgress', {
+            tableName,
+            loaded,
+            total,
+            percentage: Math.round((loaded / total) * 100)
+          })
+        }
+      })
+
+      return result
     }
   )
 

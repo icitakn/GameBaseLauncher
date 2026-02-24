@@ -10,6 +10,9 @@ export const entityApi = {
     useBatching = true
   ) => ipcRenderer.invoke('entity:getAll', tableName, filter, gamebaseId, useBatching),
 
+  getSlim: (tableName: string, gamebaseId: string, fields?: string[]) =>
+    ipcRenderer.invoke('entity:getSlim', tableName, gamebaseId, fields),
+
   getCount: (tableName: string, filter: { [name: string]: any[] }, gamebaseId: UUID) =>
     ipcRenderer.invoke('entity:getCount', tableName, filter, gamebaseId),
 
