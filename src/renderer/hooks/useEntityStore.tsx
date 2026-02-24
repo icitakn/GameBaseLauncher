@@ -21,7 +21,6 @@ import { EntityType } from '@shared/types/database.types'
 import { toast } from 'react-toastify'
 import { t } from 'i18next'
 
-// Base interface for entities
 interface BaseEntity {
   id?: number | null
   name?: string | null
@@ -179,7 +178,6 @@ const createEntityLoaderWithBatching = <T extends BaseEntity>(
     const customLabelFn = options?.customLabelFn
 
     try {
-      // Initialize loading state
       set((state: State) => ({
         ...state,
         loadingStates: {
@@ -193,7 +191,6 @@ const createEntityLoaderWithBatching = <T extends BaseEntity>(
         }
       }))
 
-      // Register progress listener
       const removeListener = window.electron.onLoadProgress((progressData) => {
         if (progressData.tableName === entityType) {
           set((state: State) => ({
@@ -211,25 +208,21 @@ const createEntityLoaderWithBatching = <T extends BaseEntity>(
         }
       })
 
-      // Load entities
       const entities: T[] = await window.electron.getAll(entityType, {}, gamebaseId, useBatching)
 
       removeListener()
 
-      // Create IdLabelObjects
       const idLabelObjects: IdLabelObject[] = entities.map((entity: T) => ({
         id: entity.id!,
         label: customLabelFn ? customLabelFn(entity) : entity.name!
       }))
 
-      // Sort
       if (sortBy === 'name') {
         idLabelObjects.sort((a, b) => a.label.localeCompare(b.label))
       } else {
         idLabelObjects.sort((a, b) => a.id - b.id)
       }
 
-      // Update state
       set((state: State) => ({
         ...state,
         [stateKey]: idLabelObjects,
@@ -247,7 +240,6 @@ const createEntityLoaderWithBatching = <T extends BaseEntity>(
     } catch (error) {
       console.error(`Error loading ${entityType}:`, error)
 
-      // Set error state
       set((state: State) => ({
         ...state,
         loadingStates: {
@@ -276,16 +268,9 @@ const createEntityLoaderById = <T extends BaseEntity>(
 ) => {
   return async (id: number, gamebaseId: UUID, set: any, get: any): Promise<T | null> => {
     try {
-      const filter = {
-        id: [id]
-      }
+      const filter = { id: [id] }
 
-      const entities: T[] = await window.electron.getAll(
-        entityType,
-        filter,
-        gamebaseId,
-        false // no batching needed for single entities
-      )
+      const entities: T[] = await window.electron.getAll(entityType, filter, gamebaseId, false)
 
       if (entities.length === 0) {
         console.warn(`${entityType} with id ${id} not found`)
@@ -294,22 +279,18 @@ const createEntityLoaderById = <T extends BaseEntity>(
 
       const entity = entities[0]
 
-      // Update state - update entity in objectsKey array
       set((state: State) => {
         const currentObjects = state[objectsKey] as unknown as T[]
         const existingIndex = currentObjects.findIndex((obj) => obj.id === id)
 
         let updatedObjects: T[]
         if (existingIndex !== -1) {
-          // Entity already exists - update
           updatedObjects = [...currentObjects]
           updatedObjects[existingIndex] = entity
         } else {
-          // Add new entity
           updatedObjects = [...currentObjects, entity]
         }
 
-        // Optional: Also update IdLabelObject array if present
         if (stateKey && entity.name) {
           const currentIdLabels = state[stateKey] as IdLabelObject[]
           const existingLabelIndex = currentIdLabels.findIndex((item) => item.id === id)
@@ -446,19 +427,13 @@ const useEntityStore = create<State>((set, get) => ({
     await loader(gamebaseId, set)
   },
 
-  // Extras - without IdLabel objects
   loadExtras: async (gamebaseId: UUID, useBatching = true) => {
     try {
       set((state: State) => ({
         ...state,
         loadingStates: {
           ...state.loadingStates,
-          Extra: {
-            isLoading: true,
-            progress: 0,
-            loaded: 0,
-            total: 0
-          }
+          Extra: { isLoading: true, progress: 0, loaded: 0, total: 0 }
         }
       }))
 
@@ -516,30 +491,13 @@ const useEntityStore = create<State>((set, get) => ({
     await loader(gamebaseId, set)
   },
 
-  // Games - with count query
-  loadGames: async (gamebaseId: UUID, useBatching = true) => {
+  loadGames: async (gamebaseId: UUID) => {
     try {
       set((state: State) => ({
         ...state,
         loadingStates: {
           ...state.loadingStates,
-          Game: {
-            isLoading: true,
-            progress: 0,
-            loaded: 0,
-            total: 0
-          }
-        }
-      }))
-
-      // Total count for progress
-      const totalCount = await window.electron.getCount('Game', {}, gamebaseId)
-
-      set((state: State) => ({
-        ...state,
-        loadingStates: {
-          ...state.loadingStates,
-          Game: { ...state.loadingStates.Game, total: totalCount }
+          Game: { isLoading: true, progress: 0, loaded: 0, total: 0 }
         }
       }))
 
@@ -560,12 +518,12 @@ const useEntityStore = create<State>((set, get) => ({
         }
       })
 
-      const games = await window.electron.getAll('Game', {}, gamebaseId, useBatching)
+      const games: GameDTO[] = await window.electron.getSlim('Game', gamebaseId)
 
       removeListener()
 
       const idLabelObjects: IdLabelObject[] = games.map((game: GameDTO) => ({
-        id: game.id,
+        id: game.id!,
         label: game.name
       }))
       idLabelObjects.sort((a, b) => a.label.localeCompare(b.label))
@@ -585,7 +543,7 @@ const useEntityStore = create<State>((set, get) => ({
         }
       }))
     } catch (error) {
-      console.error('Error loading games:', error)
+      console.error('Error loading games (slim):', error)
       set((state: State) => ({
         ...state,
         loadingStates: {
@@ -597,7 +555,6 @@ const useEntityStore = create<State>((set, get) => ({
     }
   },
 
-  // Genres - with custom label function
   loadGenres: async (gamebaseId: UUID, useBatching = true) => {
     const getFullLabel = (genre: GenreDTO): string => {
       if (!genre.parent) {
@@ -662,16 +619,20 @@ const useEntityStore = create<State>((set, get) => ({
   },
 
   loadGameById: async (id: number, gamebaseId: UUID) => {
+    const cachedGame = get().gameObjects.find((g) => g.id === id)
+
+    const isFullyLoaded =
+      cachedGame && cachedGame.publisher && typeof cachedGame.publisher === 'object'
+
+    if (isFullyLoaded) {
+      return cachedGame
+    }
     const loader = createEntityLoaderById<GameDTO>('Game', 'gameObjects', 'games')
     return await loader(id, gamebaseId, set, get)
   },
 
   loadExtraById: async (id: number, gamebaseId: UUID) => {
-    const loader = createEntityLoaderById<ExtraDTO>(
-      'Extra',
-      'extraObjects'
-      // no stateKey, as Extras don't have IdLabelObjects
-    )
+    const loader = createEntityLoaderById<ExtraDTO>('Extra', 'extraObjects')
     return await loader(id, gamebaseId, set, get)
   },
 
@@ -771,7 +732,6 @@ const useEntityStore = create<State>((set, get) => ({
     try {
       console.log('Deleting entity', entityType, 'with id', id)
 
-      // Call the electron API to delete the entity
       await window.electron.deleteEntity(id, entityType, gamebaseId)
 
       const objectsKey = stateKeyMapper[entityType].objectKey
@@ -780,12 +740,10 @@ const useEntityStore = create<State>((set, get) => ({
       set((state) => {
         console.log('State before deletion', state[objectsKey])
 
-        // Remove the entity from the objects array
         const updatedObjects = (state[objectsKey] as unknown[] as BaseEntity[]).filter(
           (obj) => obj.id !== id
         )
 
-        // Remove the entity from the IdLabelObject array
         const updatedIdLabelObjects = (state[stateKey] as IdLabelObject[]).filter(
           (item) => item.id !== id
         )
