@@ -305,10 +305,6 @@ function parseFunctionCall(line: string): { name: string; args: string[] } | nul
   if (!match) return null
   const name = match[1]
   const rawArgs = match[2].trim()
-  // Split on | not preceded by another | (single pipe as param separator for some functions)
-  // GEMUS uses || for pattern matching inside args, so split only on single pipes for multi-param functions
-  // We'll split by the first unambiguous delimiter (GEMUS uses || for patterns, single | wouldn't appear)
-  // Actually Run_Program uses ||. We keep args as a single string and let functions split themselves.
   const args = rawArgs.length > 0 ? [rawArgs] : []
   return { name, args }
 }
@@ -338,19 +334,16 @@ export function executeGemusScript(scriptContent: string, ctx: GemusContext): Ge
     shouldRun: true
   }
 
-  // We process lines with an index-based approach to support If/ElseIf/Else/End If
   let i = 0
 
   /**
    * Processes an If block starting AFTER the "If condition" line.
-   * `firstBranchActive` = whether the If branch was true,
-   * `lookForElse` = whether we're still looking for a true branch.
+   * `firstBranchActive` = whether the If branch was true.
    */
   function processIfBlock(lines: string[], startIdx: number, firstBranchActive: boolean): number {
     let idx = startIdx
     let activeBranchFound = firstBranchActive
 
-    // Execute or skip the first (If) branch
     idx = executeOrSkipUntilElseOrEndIf(lines, idx, firstBranchActive)
 
     while (idx < lines.length) {
@@ -373,7 +366,6 @@ export function executeGemusScript(scriptContent: string, ctx: GemusContext): Ge
       if (upper === 'ELSE') {
         const runElse = !activeBranchFound
         idx = executeOrSkipUntilElseOrEndIf(lines, idx, runElse)
-        // After Else there should be an End If
         continue
       }
     }
@@ -476,17 +468,14 @@ function executeLine(
 
   switch (fn.name.toUpperCase()) {
     case 'ADD_CLP': {
-      // Add to main emulator command line; wrap long filenames with spaces in quotes
-      const param = quoteIfNeeded(arg)
-      state.commandLineParams += (state.commandLineParams ? ' ' : '') + param
-      log.info(`[GEMUS] Add_CLP → "${param}" (CLP so far: "${state.commandLineParams}")`)
+      state.commandLineParams += (state.commandLineParams ? ' ' : '') + arg
+      log.info(`[GEMUS] Add_CLP → "${arg}" (CLP so far: "${state.commandLineParams}")`)
       break
     }
 
     case 'ADD_CLP2': {
-      const param = quoteIfNeeded(arg)
-      state.commandLine2Params += (state.commandLine2Params ? ' ' : '') + param
-      log.info(`[GEMUS] Add_CLP2 → "${param}"`)
+      state.commandLine2Params += (state.commandLine2Params ? ' ' : '') + arg
+      log.info(`[GEMUS] Add_CLP2 → "${arg}"`)
       break
     }
 
@@ -518,7 +507,6 @@ function executeLine(
     }
 
     case 'RUN_GAMEFILE': {
-      // Run the game file directly (no emulator)
       log.info(`[GEMUS] Run_GameFile() → "${ctx.gamepathfile}"`)
       spawnProcess(ctx.gamepathfile, '')
       break
@@ -538,8 +526,6 @@ function executeLine(
 
     case 'SHOW_MESSAGE': {
       log.info(`[GEMUS] Show_Message: ${arg}`)
-      // In a desktop Electron app you could use dialog.showMessageBoxSync here
-      // For now we just log; replace with Electron dialog if desired
       console.log(`[GEMUS Message] ${arg}`)
       break
     }
@@ -554,7 +540,6 @@ function executeLine(
     }
 
     case 'WAIT': {
-      // WAIT(milliseconds) – synchronous sleep (use sparingly)
       const ms = parseInt(arg, 10) || 0
       log.info(`[GEMUS] Wait(${ms})`)
       Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms)
@@ -596,7 +581,7 @@ function executeLine(
       const key = resolveEnvVars(parts[2] ?? '', ctx)
       const val = resolveEnvVars(parts[3] ?? '', ctx)
       log.info(`[GEMUS] Set_INI_Value: file="${file}" [${sect}] ${key}=${val}`)
-      setCfgValue(file, sect, key, val) // same format as CFG for our purposes
+      setCfgValue(file, sect, key, val)
       break
     }
 
@@ -614,34 +599,25 @@ function spawnProcess(executable: string, params: string, cwd?: string, wait = f
     log.error('[GEMUS] spawnProcess: no executable specified')
     return
   }
-  const args = params ? params.split(/\s+(?=(?:[^"]*"[^"]*")*[^"]*$)/) : []
-  const cleaned = args.map((a) => a.replace(/^"|"$/g, ''))
 
-  log.info(`[GEMUS] Spawning: "${executable}" with args: ${JSON.stringify(cleaned)}`)
+  // Build the full command string and let the OS shell parse it.
+  // This correctly handles quoted arguments (e.g. -autostart "C:\path\file.t64")
+  // without us having to re-implement a shell-aware tokeniser.
+  const quotedExe = executable.includes(' ') ? `"${executable}"` : executable
+  const fullCommand = params ? `${quotedExe} ${params}` : quotedExe
 
-  const opts: child.SpawnSyncOptionsWithStringEncoding = {
-    encoding: 'utf-8',
-    cwd,
-    shell: false
-  }
+  log.info(`[GEMUS] Spawning: ${fullCommand}`)
 
   if (wait) {
-    child.spawnSync(executable, cleaned, opts)
+    child.execSync(fullCommand, { cwd, stdio: 'ignore' })
   } else {
-    child.spawn(executable, cleaned, { detached: true, stdio: 'ignore', cwd })
+    child.exec(fullCommand, { cwd })
   }
 }
 
 // ---------------------------------------------------------------------------
 // Utility
 // ---------------------------------------------------------------------------
-
-function quoteIfNeeded(value: string): string {
-  if (value.includes(' ') && !value.startsWith('"')) {
-    return `"${value}"`
-  }
-  return value
-}
 
 /**
  * Reads a GEMUS script from the given file path.

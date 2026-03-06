@@ -69,7 +69,8 @@
       "games_folder": "Games folder",
       "images_folder": "Images folder",
       "music_folder": "Music folder",
-      "photos_folder": "Photos folder"
+      "photos_folder": "Photos folder",
+      "gemus_file": "GEMUS script file"
     },
     "errors": {
       "name_required": "Please enter a name.",
