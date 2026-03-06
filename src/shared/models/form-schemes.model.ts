@@ -31,7 +31,8 @@ export const gamebaseSchema = object().shape({
     images: string().nullable(),
     music: string().nullable(),
     photos: string().nullable()
-  })
+  }),
+  gemusScript: string().nullable()
 })
 
 export const baseSchema = object().shape({

@@ -69,7 +69,8 @@
       "games_folder": "Spieleordner",
       "images_folder": "Bilderordner",
       "music_folder": "Musikordner",
-      "photos_folder": "Fotoordner"
+      "photos_folder": "Fotoordner",
+      "gemus_file": "GEMUS Skript Datei"
     },
     "errors": {
       "name_required": "Bitte gib einen Namen ein.",

@@ -2,6 +2,7 @@ import { GameBase } from '@shared/models/settings.model'
 import { Game } from '../entities/game.entity'
 import { Genre } from '../entities/genre.entity'
 import { extract, getSettings, normalizePath, saveSettings } from './file.service'
+import { executeGemusScript, loadGemusScript, parseKvPairs, GemusContext } from './gemus.service'
 import * as child from 'child_process'
 import * as fs from 'fs'
 import log from 'electron-log'
@@ -39,20 +40,79 @@ export function execute(gamebase: GameBase, game: Game) {
     log.info('Games folder is not set!')
   }
 
-  let gamepath
+  let gamepath: string
 
   const normalizedFilename = normalizePath(game.filename!)
   if (gamebase?.folders?.games) {
     gamepath = path.join(gamebase.folders.games, normalizedFilename)
   } else {
-    gamepath = game.filename
+    gamepath = game.filename!
   }
 
+  // Handle ZIP extraction (pre-GEMUS, same as before)
   if (normalizedFilename.endsWith('.zip') && gamebase?.folders?.extractTo && game.fileToRun) {
     extract(gamepath, gamebase.folders.extractTo)
     gamepath = path.join(gamebase.folders.extractTo, game.fileToRun)
   }
 
+  // -------------------------------------------------------------------------
+  // GEMUS Script path
+  // -------------------------------------------------------------------------
+  if (gamebase.gemusScript) {
+    log.info(`[GEMUS] Running game "${game.name}" via GEMUS script: "${gamebase.gemusScript}"`)
+    const scriptContent = loadGemusScript(gamebase.gemusScript)
+
+    // Resolve the emulator path (directory only, not the executable itself)
+    const emulatorPath = gamebase.emulator ? path.dirname(gamebase.emulator) : ''
+
+    // Parse key=value pairs stored on the game (stored as a raw string)
+    const kvPairs = parseKvPairs(game.gemus ?? undefined)
+
+    // Allow per-game emulator override via emu=<name> key
+    let resolvedEmulator = gamebase.emulator ?? ''
+    if (kvPairs['emu']) {
+      // In a full implementation you'd look up the emulator by name from a registry;
+      // here we just use the value directly if it looks like a path.
+      resolvedEmulator = kvPairs['emu']
+      log.info(`[GEMUS] emu= override: using "${resolvedEmulator}"`)
+    }
+
+    const ctx: GemusContext = {
+      gamebase,
+      game,
+      gamepathfile: gamepath,
+      emulatorPath,
+      kvPairs
+    }
+
+    try {
+      const scriptResult = executeGemusScript(scriptContent, ctx)
+
+      if (!scriptResult.shouldRun) {
+        log.info(`[GEMUS] Script decided not to run the game (shouldRun=false)`)
+        if (scriptResult.exitMessage) {
+          log.info(`[GEMUS] Exit message: ${scriptResult.exitMessage}`)
+        }
+        // Still record stats so the game shows up as attempted
+        recordGamePlayed(gamebase, game)
+        return
+      }
+
+      // Stats are recorded after the emulator finishes;
+      // GEMUS already calls spawnProcess internally in Run_Emulator() /
+      // Run_GameFile(). We still track stats here.
+      recordGamePlayed(gamebase, game)
+    } catch (err) {
+      log.error(`[GEMUS] Script execution failed for "${game.name}": ${err}`)
+      throw err
+    }
+
+    return
+  }
+
+  // -------------------------------------------------------------------------
+  // Legacy (non-GEMUS) path
+  // -------------------------------------------------------------------------
   if (!gamebase.emulator && !isExecutable(gamepath)) {
     const msg = `Game "${game.name}" is not executable on this system (${os.platform()}) and no emulator is configured.`
     log.error(msg)
@@ -84,25 +144,26 @@ export function execute(gamebase: GameBase, game: Game) {
     }
   )
 
+  recordGamePlayed(gamebase, game)
+}
+
+// ---------------------------------------------------------------------------
+// Shared helpers
+// ---------------------------------------------------------------------------
+
+const getFullLabel = (genre: Genre): string => {
+  const name = genre.name ?? ''
+  if (!genre.parent) return name
+  const parentLabel = getFullLabel(genre.parent)
+  return parentLabel ? parentLabel + ' - ' + name : name
+}
+
+function recordGamePlayed(gamebase: GameBase, game: Game): void {
+  if (!game.id) return
+
   const settings = getSettings()
   if (!settings.stats) {
-    settings.stats = {
-      gamesPlayed: [],
-      musicListenedTo: []
-    }
-  }
-
-  const getFullLabel = (genre: Genre): string => {
-    const name = genre.name ?? ''
-    if (!genre.parent) {
-      return name
-    }
-    const parentLabel = getFullLabel(genre.parent)
-    return parentLabel ? parentLabel + ' - ' + name : name
-  }
-
-  if (!game.id) {
-    return
+    settings.stats = { gamesPlayed: [], musicListenedTo: [] }
   }
 
   const alreadyPlayedIdx = settings.stats.gamesPlayed.findIndex((played) => played.id === game.id)
@@ -122,6 +183,7 @@ export function execute(gamebase: GameBase, game: Game) {
       }
     ]
   }
+
   saveSettings(settings)
 }
 
@@ -136,7 +198,7 @@ export function playMusic(
     log.error('Music folder is not set')
   }
 
-  let musicpath
+  let musicpath: string
 
   const normalizedFilename = normalizePath(fileName)
   if (gamebase?.folders?.music) {
@@ -155,19 +217,14 @@ export function playMusic(
     gamebase.musicplayer || musicpath,
     gamebase.musicplayer ? [musicpath] : [],
     (error: child.ExecFileException | null, stdout: string, _stderr: string) => {
-      if (error) {
-        console.log(error)
-      }
+      if (error) console.log(error)
       if (stdout) console.log(stdout)
     }
   )
 
   const settings = getSettings()
   if (!settings.stats) {
-    settings.stats = {
-      gamesPlayed: [],
-      musicListenedTo: []
-    }
+    settings.stats = { gamesPlayed: [], musicListenedTo: [] }
   }
 
   const alreadyPlayedIdx = settings.stats.musicListenedTo.findIndex(

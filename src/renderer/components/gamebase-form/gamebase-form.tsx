@@ -38,7 +38,8 @@ export function GamebaseForm({ onSubmit, gamebase, title }: GamebaseFormProps) {
         images: '',
         music: '',
         photos: ''
-      }
+      },
+      gemusScript: ''
     },
     resolver: yupResolver(gamebaseSchema)
   })
@@ -55,6 +56,7 @@ export function GamebaseForm({ onSubmit, gamebase, title }: GamebaseFormProps) {
       setValue('folders.images', gamebase.folders?.images)
       setValue('folders.music', gamebase.folders?.music)
       setValue('folders.photos', gamebase.folders?.photos)
+      setValue('gemusScript', gamebase.gemusScript)
     }
   }, [gamebase, setValue])
 
@@ -218,7 +220,23 @@ export function GamebaseForm({ onSubmit, gamebase, title }: GamebaseFormProps) {
             sx={{ flexGrow: 1 }}
           />
           <Button variant="outlined" color="secondary" onClick={() => handleFileClick('emulator')}>
-            <FontAwesomeIcon icon={faFolder}></FontAwesomeIcon>
+            <FontAwesomeIcon icon={faFile}></FontAwesomeIcon>
+          </Button>
+        </Stack>
+
+        <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
+          <FormTextField
+            control={control}
+            name="gemusScript"
+            label={t('translation:gamebase.form_fields.gemus_file')}
+            sx={{ flexGrow: 1 }}
+          />
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={() => handleFileClick('gemusScript')}
+          >
+            <FontAwesomeIcon icon={faFile}></FontAwesomeIcon>
           </Button>
         </Stack>
 
@@ -234,7 +252,7 @@ export function GamebaseForm({ onSubmit, gamebase, title }: GamebaseFormProps) {
             color="secondary"
             onClick={() => handleFileClick('musicplayer')}
           >
-            <FontAwesomeIcon icon={faFolder}></FontAwesomeIcon>
+            <FontAwesomeIcon icon={faFile}></FontAwesomeIcon>
           </Button>
         </Stack>
 

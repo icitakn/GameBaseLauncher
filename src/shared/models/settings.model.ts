@@ -22,6 +22,7 @@ export type GameBase = {
   musicplayer?: string | null
   // commands?: Command[];
   state?: string | null
+  gemusScript?: string | null
 }
 
 export type GamePlayed = {
