@@ -2,11 +2,9 @@ import { GameBase } from '@shared/models/settings.model'
 import { Game } from '../entities/game.entity'
 import * as child from 'child_process'
 import * as fs from 'fs'
-import * as ini from 'ini'
 import log from 'electron-log'
 import path from 'path'
 import os from 'os'
-import readline from 'readline'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -17,12 +15,12 @@ const CONTROLS = [
   'JoyPort2',
   'JoyPort1',
   'Keyboard',
-  'Paddle Port 2',
-  'Paddle Port 1',
+  'PaddlePort2',
+  'PaddlePort1',
   'Mouse',
-  'Light Pen',
-  'Koala Pad',
-  'Light Gun'
+  'LightPen',
+  'KoalaPad',
+  'LightGun'
 ]
 
 export interface GemusContext {
@@ -139,10 +137,10 @@ function evaluateCondition(condition: string, ctx: GemusContext): boolean {
           fieldValue = ext
           break
         case 'gamecomment':
-          fieldValue = (ctx.game as any).comment ?? ''
+          fieldValue = ctx.game.comment ?? ''
           break
         case 'versioncomment':
-          fieldValue = (ctx.game as any).versionComment ?? ''
+          fieldValue = ctx.game.vComment ?? ''
           break
         case 'imagename':
           fieldValue = gamefilenoext.toUpperCase()
@@ -343,56 +341,12 @@ export function executeGemusScript(scriptContent: string, ctx: GemusContext): Ge
   // We process lines with an index-based approach to support If/ElseIf/Else/End If
   let i = 0
 
-  function processBlock(lines: string[], startIdx: number, execute: boolean): number {
-    let idx = startIdx
-    while (idx < lines.length) {
-      const raw = lines[idx].trim()
-      idx++
-
-      if (!raw || raw.startsWith(';')) continue
-
-      const upper = raw.toUpperCase()
-
-      // End of block
-      if (upper === 'END IF' || upper === 'ENDIF') {
-        return idx
-      }
-
-      // Start of nested If block
-      if (upper.startsWith('IF ')) {
-        if (execute) {
-          const condition = raw.substring(3).trim()
-          const condResult = evaluateCondition(condition, ctx)
-          idx = processIfBlock(lines, idx, condResult, !condResult)
-        } else {
-          idx = skipIfBlock(lines, idx)
-        }
-        continue
-      }
-
-      // ElseIf / Else signals end of this block
-      if (upper.startsWith('ELSEIF ') || upper === 'ELSE') {
-        return idx - 1 // let caller handle
-      }
-
-      if (execute) {
-        executeLine(raw, state, ctx, result)
-      }
-    }
-    return idx
-  }
-
   /**
    * Processes an If block starting AFTER the "If condition" line.
    * `firstBranchActive` = whether the If branch was true,
    * `lookForElse` = whether we're still looking for a true branch.
    */
-  function processIfBlock(
-    lines: string[],
-    startIdx: number,
-    firstBranchActive: boolean,
-    lookForElse: boolean
-  ): number {
+  function processIfBlock(lines: string[], startIdx: number, firstBranchActive: boolean): number {
     let idx = startIdx
     let activeBranchFound = firstBranchActive
 
@@ -452,7 +406,7 @@ export function executeGemusScript(scriptContent: string, ctx: GemusContext): Ge
         if (execute) {
           const condition = raw.substring(3).trim()
           const condResult = evaluateCondition(condition, ctx)
-          idx = processIfBlock(lines, idx, condResult, !condResult)
+          idx = processIfBlock(lines, idx, condResult)
         } else {
           idx = skipIfBlock(lines, idx)
         }
@@ -490,7 +444,7 @@ export function executeGemusScript(scriptContent: string, ctx: GemusContext): Ge
     if (upper.startsWith('IF ')) {
       const condition = raw.substring(3).trim()
       const condResult = evaluateCondition(condition, ctx)
-      i = processIfBlock(lines, i, condResult, !condResult)
+      i = processIfBlock(lines, i, condResult)
       continue
     }
 
