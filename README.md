@@ -1,6 +1,6 @@
 # GameBase Launcher
 
-An Electron application built with React and TypeScript for managing GameBases (like this one: https://gb64.com/). This app is designed to replace the old Access database format (.mdb) with a new Sqlite database (.db). In the first version the new database structure looks almost the same like the old. Also, in this first version several features that come with "The GameBase Frontend" (see https://www.bu22.com/) are not implemented yet, like GEMUS. Ideas for improvements and new features are welcome.
+An Electron application built with React and TypeScript for managing GameBases (like this one: https://gb64.com/). This app is designed to replace the old Access database format (.mdb) with a new Sqlite database (.db). In the first version the new database structure looks almost the same like the old. Also, in this first version several features that come with "The GameBase Frontend" (see https://www.bu22.com/) are not implemented yet. Ideas for improvements and new features are welcome.
 
 Also, feel free to fork this repo and create an app managing something completely different with it.
 
@@ -8,8 +8,8 @@ Runs on Windows, Mac and Linux.
 
 ## How to run
 
-On Windows you can either download and run the pre-built release or clone the repo and build it yourself.
-On Mac and Linux, please build it yourself. I plan to upload a pre-built release with the next release for these systems as well.
+On Windows you can either download and run the installer (see [Releases](https://github.com/icitakn/GameBaseLauncher/releases)) or clone the repo and build it yourself.
+On Mac and Linux, please build it yourself. I plan to upload a pre-built release with one of the next releases for these systems as well.
 
 ## Prerequisites
 
