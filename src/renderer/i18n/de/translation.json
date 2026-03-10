@@ -39,6 +39,7 @@
     "developers": "Entwickler",
     "crackers": "Cracker",
     "musics": "Musik",
+    "masterdata": "Stammdaten",
     "gb_settings": "GB Einstellungen",
     "add_gamebase": "Füge eine neue Gamebase hinzu",
     "app_settings": "App Einstellungen"
@@ -83,6 +84,8 @@
     },
     "tabs": {
       "general": "Allgemein",
+      "external_apps": "Programme",
+      "folders": "Ordner",
       "genres": "Genres",
       "languages": "Sprachen",
       "difficulties": "Schwierigkeitsgrade",

@@ -1,8 +1,4 @@
-import { Container, Stack, Tab, Tabs } from '@mui/material'
-import { GameBase } from '@shared/models/settings.model'
-import { toast } from 'react-toastify'
-import { GamebaseForm } from '../components/gamebase-form/gamebase-form'
-import { useSelectedGamebase } from '../hooks/useGamebase'
+import { Stack, Tab, Tabs } from '@mui/material'
 import { useState } from 'react'
 import { TabPanel } from '../components/common/tab-panel'
 import { BaseEditForm } from '../components/forms/base-edit-form'
@@ -48,7 +44,7 @@ const baseColumns = [
   baseColumnHelper.accessor('name', { header: 'NAME' })
 ]
 
-export function EditGamebase() {
+export function Masterdata() {
   const createNew = (): BaseDTO => {
     return {
       id: undefined,
@@ -72,39 +68,17 @@ export function EditGamebase() {
   const licenses = useEntityStore((state) => state.licenseObjects)
   const loadLicenses = useEntityStore((state) => state.loadLicenses)
 
-  // const navigate = useNavigate();
-  const { selectedGamebase } = useSelectedGamebase()
-
-  const onSubmit = (gamebase: GameBase) => {
-    if (selectedGamebase) {
-      // the form does not contain the id, so we need to set it here
-      gamebase.id = selectedGamebase.id
-      window.electron.editGamebase(gamebase).then(() => {
-        toast.success(t('translation:forms.messages.save_success'), {
-          position: 'bottom-left'
-        })
-      })
-    }
-  }
-
   return (
     <Stack direction="column" spacing={2} sx={{ padding: '10px', flex: '1' }}>
       <Tabs value={selectedTab} onChange={handleTabChange}>
-        <Tab label={t('translation:gamebase.tabs.general')} value={0} />
-        <Tab label={t('translation:gamebase.tabs.external_apps')} value={1} />
-        <Tab label={t('translation:gamebase.tabs.folders')} value={2} />
+        <Tab label={t('translation:gamebase.tabs.genres')} value={0} />
+        <Tab label={t('translation:gamebase.tabs.languages')} value={1} />
+        <Tab label={t('translation:gamebase.tabs.difficulties')} value={2} />
+        <Tab label={t('translation:gamebase.tabs.rarities')} value={3} />
+        <Tab label={t('translation:gamebase.tabs.licenses')} value={4} />
       </Tabs>
 
       <TabPanel value={selectedTab} index={0}>
-        <Container sx={{ display: 'flex', flexDirection: 'column', py: 2 }}>
-          <GamebaseForm
-            onSubmit={onSubmit}
-            gamebase={selectedGamebase}
-            title={t('translation:gamebase.edit')}
-          />
-        </Container>
-      </TabPanel>
-      <TabPanel value={selectedTab} index={1}>
         <MasterDetail
           columns={genreColumns}
           tableName="Genre"
@@ -115,7 +89,7 @@ export function EditGamebase() {
           loadData={loadGenres}
         />
       </TabPanel>
-      <TabPanel value={selectedTab} index={2}>
+      <TabPanel value={selectedTab} index={1}>
         <MasterDetail
           columns={baseColumns}
           tableName="Language"
@@ -126,7 +100,7 @@ export function EditGamebase() {
           loadData={loadLanguages}
         />
       </TabPanel>
-      <TabPanel value={selectedTab} index={3}>
+      <TabPanel value={selectedTab} index={2}>
         <MasterDetail
           columns={baseColumns}
           tableName="Difficulty"
@@ -137,7 +111,7 @@ export function EditGamebase() {
           loadData={loadDifficulties}
         />
       </TabPanel>
-      <TabPanel value={selectedTab} index={4}>
+      <TabPanel value={selectedTab} index={3}>
         <MasterDetail
           columns={baseColumns}
           tableName="Rarity"
@@ -149,7 +123,7 @@ export function EditGamebase() {
         />
       </TabPanel>
 
-      <TabPanel value={selectedTab} index={5}>
+      <TabPanel value={selectedTab} index={4}>
         <MasterDetail
           columns={baseColumns}
           tableName="License"
