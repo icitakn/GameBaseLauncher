@@ -49,10 +49,15 @@ export function execute(gamebase: GameBase, game: Game) {
     gamepath = game.filename!
   }
 
-  // Handle ZIP extraction (pre-GEMUS, same as before)
-  if (normalizedFilename.endsWith('.zip') && gamebase?.folders?.extractTo && game.fileToRun) {
-    extract(gamepath, gamebase.folders.extractTo)
-    gamepath = path.join(gamebase.folders.extractTo, game.fileToRun)
+  if (normalizedFilename.endsWith('.zip')) {
+    if (gamebase?.folders?.extractTo && game.fileToRun) {
+      extract(gamepath, gamebase.folders.extractTo)
+      gamepath = path.join(gamebase.folders.extractTo, game.fileToRun)
+    } else {
+      throw new Error(
+        'Zip file found but no extractTo folder or the game has no file to run after unzipping'
+      )
+    }
   }
 
   // -------------------------------------------------------------------------
