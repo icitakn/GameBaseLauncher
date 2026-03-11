@@ -1,4 +1,4 @@
-import { Button, Card, CardContent, Divider, Stack, Typography } from '@mui/material'
+import { Button, Card, CardContent, Container, Stack, Tab, Tabs } from '@mui/material'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { t } from 'i18next'
@@ -13,14 +13,14 @@ import { useNavigate } from 'react-router-dom'
 import { SEPARATOR } from '@shared/consts'
 import FormTextField from '../forms/components/form-textfield'
 import { UUID } from 'crypto'
+import { TabPanel } from '../common/tab-panel'
 
 export interface GamebaseFormProps {
   onSubmit: (gamebase: GameBase) => void
   gamebase?: GameBase
-  title: string
 }
 
-export function GamebaseForm({ onSubmit, gamebase, title }: GamebaseFormProps) {
+export function GamebaseForm({ onSubmit, gamebase }: GamebaseFormProps) {
   type ImportType = 'mdb' | 'db'
 
   const [importType, setImportType] = useState<ImportType>('mdb')
@@ -69,6 +69,11 @@ export function GamebaseForm({ onSubmit, gamebase, title }: GamebaseFormProps) {
 
   const { openDialog } = useFileDialog()
   const { openConfirmDialog } = useConfirmDialog()
+
+  const [selectedTab, setSelectedTab] = useState(0)
+  const handleTabChange = (event: React.SyntheticEvent, newTab: number) => {
+    setSelectedTab(newTab)
+  }
 
   const handleFileClick = async (key: keyof GamebaseDTO) => {
     const selected = await openDialog({
@@ -151,176 +156,205 @@ export function GamebaseForm({ onSubmit, gamebase, title }: GamebaseFormProps) {
       <Stack
         spacing={2}
         sx={{
-          boxShadow: '4',
-          padding: '15px'
+          padding: '10px'
         }}
       >
-        <Typography variant="h6" fontWeight="bold">
-          {title}
-        </Typography>
+        <Tabs value={selectedTab} onChange={handleTabChange}>
+          <Tab label={t('translation:gamebase.tabs.general')} value={0} />
+          <Tab label={t('translation:gamebase.tabs.external_apps')} value={1} />
+          <Tab label={t('translation:gamebase.tabs.folders')} value={2} />
+        </Tabs>
 
-        <FormTextField
-          control={control}
-          name="name"
-          label={t('translation:gamebase.form_fields.name')}
-        />
-
-        {!gamebase && (
-          <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
-            <ImportOption type="mdb" text={t('gamebase.select_importMdb')} />
-            <ImportOption type="db" text={t('gamebase.select_importDb')} />
-          </Stack>
-        )}
-
-        {importType === 'mdb' && (
-          <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
+        <TabPanel value={selectedTab} index={0}>
+          <Stack spacing={2} sx={{ display: 'flex', flexDirection: 'column' }}>
             <FormTextField
               control={control}
-              name="importFile"
-              label={t('translation:gamebase.form_fields.importfile')}
-              sx={{ flexGrow: 1 }}
-              disabled={gamebase !== undefined}
+              name="name"
+              label={t('translation:gamebase.form_fields.name')}
             />
-            <Button
-              variant="outlined"
-              color="secondary"
-              onClick={() => handleFileClick('importFile')}
-              disabled={gamebase !== undefined}
-            >
-              <FontAwesomeIcon icon={faFile}></FontAwesomeIcon>
-            </Button>
+
+            {!gamebase && (
+              <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
+                <ImportOption type="mdb" text={t('gamebase.select_importMdb')} />
+                <ImportOption type="db" text={t('gamebase.select_importDb')} />
+              </Stack>
+            )}
+
+            {importType === 'mdb' && (
+              <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
+                <FormTextField
+                  control={control}
+                  name="importFile"
+                  label={t('translation:gamebase.form_fields.importfile')}
+                  sx={{ flexGrow: 1 }}
+                  disabled={gamebase !== undefined}
+                />
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  onClick={() => handleFileClick('importFile')}
+                  disabled={gamebase !== undefined}
+                >
+                  <FontAwesomeIcon icon={faFile}></FontAwesomeIcon>
+                </Button>
+              </Stack>
+            )}
+
+            <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
+              <FormTextField
+                control={control}
+                name="dbFile"
+                label={t('translation:gamebase.form_fields.db_file')}
+                sx={{ flexGrow: 1 }}
+                disabled={gamebase !== undefined}
+              />
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={handleDbFileFolderClick}
+                disabled={gamebase !== undefined}
+              >
+                <FontAwesomeIcon icon={faFolder}></FontAwesomeIcon>
+              </Button>
+            </Stack>
           </Stack>
-        )}
+        </TabPanel>
 
-        <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
-          <FormTextField
-            control={control}
-            name="dbFile"
-            label={t('translation:gamebase.form_fields.db_file')}
-            sx={{ flexGrow: 1 }}
-            disabled={gamebase !== undefined}
-          />
-          <Button
-            variant="outlined"
-            color="secondary"
-            onClick={handleDbFileFolderClick}
-            disabled={gamebase !== undefined}
-          >
-            <FontAwesomeIcon icon={faFolder}></FontAwesomeIcon>
-          </Button>
-        </Stack>
+        <TabPanel value={selectedTab} index={1}>
+          <Stack spacing={2} sx={{ display: 'flex', flexDirection: 'column' }}>
+            <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
+              <FormTextField
+                control={control}
+                name="emulator"
+                label={t('translation:gamebase.form_fields.emulator')}
+                sx={{ flexGrow: 1 }}
+              />
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={() => handleFileClick('emulator')}
+              >
+                <FontAwesomeIcon icon={faFile}></FontAwesomeIcon>
+              </Button>
+            </Stack>
 
-        <Divider />
+            <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
+              <FormTextField
+                control={control}
+                name="gemusScript"
+                label={t('translation:gamebase.form_fields.gemus_file')}
+                sx={{ flexGrow: 1 }}
+              />
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={() => handleFileClick('gemusScript')}
+              >
+                <FontAwesomeIcon icon={faFile}></FontAwesomeIcon>
+              </Button>
+            </Stack>
 
-        <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
-          <FormTextField
-            control={control}
-            name="emulator"
-            label={t('translation:gamebase.form_fields.emulator')}
-            sx={{ flexGrow: 1 }}
-          />
-          <Button variant="outlined" color="secondary" onClick={() => handleFileClick('emulator')}>
-            <FontAwesomeIcon icon={faFile}></FontAwesomeIcon>
-          </Button>
-        </Stack>
+            <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
+              <FormTextField
+                control={control}
+                name="musicplayer"
+                label={t('translation:gamebase.form_fields.music_player')}
+                sx={{ flexGrow: 1 }}
+              />
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={() => handleFileClick('musicplayer')}
+              >
+                <FontAwesomeIcon icon={faFile}></FontAwesomeIcon>
+              </Button>
+            </Stack>
+          </Stack>
+        </TabPanel>
 
-        <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
-          <FormTextField
-            control={control}
-            name="gemusScript"
-            label={t('translation:gamebase.form_fields.gemus_file')}
-            sx={{ flexGrow: 1 }}
-          />
-          <Button
-            variant="outlined"
-            color="secondary"
-            onClick={() => handleFileClick('gemusScript')}
-          >
-            <FontAwesomeIcon icon={faFile}></FontAwesomeIcon>
-          </Button>
-        </Stack>
+        <TabPanel value={selectedTab} index={2}>
+          <Stack spacing={2} sx={{ display: 'flex', flexDirection: 'column' }}>
+            <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
+              <FormTextField
+                control={control}
+                name="folders.extractTo"
+                label={t('translation:gamebase.form_fields.extract_zip_to')}
+                sx={{ flexGrow: 1 }}
+              />
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={() => handleFolderClick('extractTo')}
+              >
+                <FontAwesomeIcon icon={faFolder}></FontAwesomeIcon>
+              </Button>
+            </Stack>
 
-        <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
-          <FormTextField
-            control={control}
-            name="musicplayer"
-            label={t('translation:gamebase.form_fields.music_player')}
-            sx={{ flexGrow: 1 }}
-          />
-          <Button
-            variant="outlined"
-            color="secondary"
-            onClick={() => handleFileClick('musicplayer')}
-          >
-            <FontAwesomeIcon icon={faFile}></FontAwesomeIcon>
-          </Button>
-        </Stack>
+            <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
+              <FormTextField
+                control={control}
+                name="folders.games"
+                label={t('translation:gamebase.form_fields.games_folder')}
+                sx={{ flexGrow: 1 }}
+              />
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={() => handleFolderClick('games')}
+              >
+                <FontAwesomeIcon icon={faFolder}></FontAwesomeIcon>
+              </Button>
+            </Stack>
 
-        <Divider />
+            <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
+              <FormTextField
+                control={control}
+                name="folders.images"
+                label={t('translation:gamebase.form_fields.images_folder')}
+                sx={{ flexGrow: 1 }}
+              />
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={() => handleFolderClick('images')}
+              >
+                <FontAwesomeIcon icon={faFolder}></FontAwesomeIcon>
+              </Button>
+            </Stack>
 
-        <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
-          <FormTextField
-            control={control}
-            name="folders.extractTo"
-            label={t('translation:gamebase.form_fields.extract_zip_to')}
-            sx={{ flexGrow: 1 }}
-          />
-          <Button
-            variant="outlined"
-            color="secondary"
-            onClick={() => handleFolderClick('extractTo')}
-          >
-            <FontAwesomeIcon icon={faFolder}></FontAwesomeIcon>
-          </Button>
-        </Stack>
+            <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
+              <FormTextField
+                control={control}
+                name="folders.music"
+                label={t('translation:gamebase.form_fields.music_folder')}
+                sx={{ flexGrow: 1 }}
+              />
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={() => handleFolderClick('music')}
+              >
+                <FontAwesomeIcon icon={faFolder}></FontAwesomeIcon>
+              </Button>
+            </Stack>
 
-        <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
-          <FormTextField
-            control={control}
-            name="folders.games"
-            label={t('translation:gamebase.form_fields.games_folder')}
-            sx={{ flexGrow: 1 }}
-          />
-          <Button variant="outlined" color="secondary" onClick={() => handleFolderClick('games')}>
-            <FontAwesomeIcon icon={faFolder}></FontAwesomeIcon>
-          </Button>
-        </Stack>
-
-        <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
-          <FormTextField
-            control={control}
-            name="folders.images"
-            label={t('translation:gamebase.form_fields.images_folder')}
-            sx={{ flexGrow: 1 }}
-          />
-          <Button variant="outlined" color="secondary" onClick={() => handleFolderClick('images')}>
-            <FontAwesomeIcon icon={faFolder}></FontAwesomeIcon>
-          </Button>
-        </Stack>
-
-        <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
-          <FormTextField
-            control={control}
-            name="folders.music"
-            label={t('translation:gamebase.form_fields.music_folder')}
-            sx={{ flexGrow: 1 }}
-          />
-          <Button variant="outlined" color="secondary" onClick={() => handleFolderClick('music')}>
-            <FontAwesomeIcon icon={faFolder}></FontAwesomeIcon>
-          </Button>
-        </Stack>
-
-        <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
-          <FormTextField
-            control={control}
-            name="folders.photos"
-            label={t('translation:gamebase.form_fields.photos_folder')}
-            sx={{ flexGrow: 1 }}
-          />
-          <Button variant="outlined" color="secondary" onClick={() => handleFolderClick('photos')}>
-            <FontAwesomeIcon icon={faFolder}></FontAwesomeIcon>
-          </Button>
-        </Stack>
+            <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
+              <FormTextField
+                control={control}
+                name="folders.photos"
+                label={t('translation:gamebase.form_fields.photos_folder')}
+                sx={{ flexGrow: 1 }}
+              />
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={() => handleFolderClick('photos')}
+              >
+                <FontAwesomeIcon icon={faFolder}></FontAwesomeIcon>
+              </Button>
+            </Stack>
+          </Stack>
+        </TabPanel>
 
         <Stack direction="row" sx={{ marginTop: 3 }} spacing={2}>
           {gamebase && (

@@ -1,4 +1,4 @@
-import { Container } from '@mui/material'
+import { Card, Container, Stack } from '@mui/material'
 import { t } from 'i18next'
 import { Settings, GameBase } from '@shared/models/settings.model'
 import { useNavigate } from 'react-router-dom'
@@ -34,8 +34,21 @@ export function AddGamebase() {
   }
 
   return (
-    <Container sx={{ display: 'flex', flexDirection: 'column', py: 2 }}>
-      <GamebaseForm onSubmit={onSubmit} title={t('translation:gamebase.add')} />
-    </Container>
+    <Stack direction="row" spacing={2} sx={{ padding: '10px', flex: '1' }}>
+      <Card
+        elevation={4}
+        sx={{
+          position: 'relative',
+          width: '99%',
+          height: '99%',
+          display: 'flex',
+          flexDirection: 'column',
+          p: 2,
+          overflow: 'visible'
+        }}
+      >
+        <GamebaseForm onSubmit={onSubmit} />
+      </Card>
+    </Stack>
   )
 }
