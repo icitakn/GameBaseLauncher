@@ -60,21 +60,22 @@ export function execute(gamebase: GameBase, game: Game, emulatorId?: string) {
     }
   }
 
+  const emulator = gamebase.emulators?.find((e) => e.id === emulatorId)
   // -------------------------------------------------------------------------
   // GEMUS Script path
   // -------------------------------------------------------------------------
-  if (gamebase.gemusScript) {
-    log.info(`[GEMUS] Running game "${game.name}" via GEMUS script: "${gamebase.gemusScript}"`)
-    const scriptContent = loadGemusScript(gamebase.gemusScript)
+  if (emulator && emulator.gemusScript) {
+    log.info(`[GEMUS] Running game "${game.name}" via GEMUS script: "${emulator.gemusScript}"`)
+    const scriptContent = loadGemusScript(emulator.gemusScript)
 
     // Resolve the emulator path (directory only, not the executable itself)
-    const emulatorPath = gamebase.emulator ? path.dirname(gamebase.emulator) : ''
+    const emulatorPath = emulator.path ? path.dirname(emulator.path) : ''
 
     // Parse key=value pairs stored on the game (stored as a raw string)
     const kvPairs = parseKvPairs(game.gemus ?? undefined)
 
     // Allow per-game emulator override via emu=<name> key
-    let resolvedEmulator = gamebase.emulator ?? ''
+    let resolvedEmulator = emulator.path ?? ''
     if (kvPairs['emu']) {
       // In a full implementation you'd look up the emulator by name from a registry;
       // here we just use the value directly if it looks like a path.
@@ -118,15 +119,15 @@ export function execute(gamebase: GameBase, game: Game, emulatorId?: string) {
   // -------------------------------------------------------------------------
   // Legacy (non-GEMUS) path
   // -------------------------------------------------------------------------
-  if (!gamebase.emulator && !isExecutable(gamepath)) {
+  if (!emulator && !isExecutable(gamepath)) {
     const msg = `Game "${game.name}" is not executable on this system (${os.platform()}) and no emulator is configured.`
     log.error(msg)
     throw new Error(msg)
   }
 
   child.execFile(
-    gamebase.emulator || gamepath,
-    gamebase.emulator ? [gamepath] : [],
+    emulator?.path || gamepath,
+    emulator?.path ? [gamepath] : [],
     (error: child.ExecFileException | null, _stdout: string, _stderr: string) => {
       const settings = getSettings()
 
