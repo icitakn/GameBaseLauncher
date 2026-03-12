@@ -2,19 +2,28 @@ import { GameDTO } from '@shared/models/form-schemes.model'
 import {
   Box,
   Button,
+  ButtonGroup,
   CircularProgress,
+  ClickAwayListener,
   Divider,
   Grid2,
+  Grow,
   ImageList,
   ImageListItem,
+  MenuItem,
+  MenuList,
+  Paper,
+  Popper,
   Stack
 } from '@mui/material'
 import { t } from 'i18next'
-import { ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
+import { ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'react-toastify'
 import { UNDEFINED_YEARS } from '@shared/consts'
 import useEntityStore from '@renderer/hooks/useEntityStore'
 import { GameBase } from '@shared/models/settings.model'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons'
 
 const IMAGE_BASE64_PREFIX = 'data:image/png;base64, '
 
@@ -27,6 +36,8 @@ export function GamePanel({ selected, selectedGamebase }: GamePanelProps): React
   const [images, setImages] = useState([])
   const [selectedImage, setSelectedImage] = useState(0)
   const [imageFolderError, setImageFolderError] = useState(false)
+  const [emulatorMenuOpen, setEmulatorMenuOpen] = useState(false)
+  const emulatorAnchorRef = useRef<HTMLDivElement>(null)
 
   const { loadGameById } = useEntityStore()
   const [game, setGame] = useState<GameDTO | null>(null)
@@ -47,14 +58,22 @@ export function GamePanel({ selected, selectedGamebase }: GamePanelProps): React
     }
   }, [loadGameById, selected?.id, selectedGamebase?.id])
 
-  const execute = async (): Promise<void> => {
+  const emulators = selectedGamebase?.emulators ?? []
+  const hasMultipleEmulators = emulators.length > 1
+
+  const execute = async (emulatorId?: string): Promise<void> => {
     if (game && game.id && selectedGamebase?.id) {
       try {
-        await window.electron.execute(selectedGamebase.id, game.id)
+        await window.electron.execute(selectedGamebase.id, game.id, emulatorId)
       } catch (error) {
         toast.error(t('common.error_occured') + error)
       }
     }
+  }
+
+  const handleEmulatorSelect = (emulatorId: string) => {
+    setEmulatorMenuOpen(false)
+    execute(emulatorId)
   }
 
   const playMusic = async (): Promise<void> => {
@@ -121,13 +140,7 @@ export function GamePanel({ selected, selectedGamebase }: GamePanelProps): React
   return (
     <Stack direction="column" sx={{ alignItems: 'center', height: '100%' }}>
       {imageFolderError && (
-        <Box
-          sx={{
-            bgcolor: 'error.main',
-            color: 'error.contrastText',
-            padding: '3px'
-          }}
-        >
+        <Box sx={{ bgcolor: 'error.main', color: 'error.contrastText', padding: '3px' }}>
           {t('translation:game.messages.screenshots')}
         </Box>
       )}
@@ -153,12 +166,7 @@ export function GamePanel({ selected, selectedGamebase }: GamePanelProps): React
             {images.map((item, index) => (
               <ImageListItem
                 key={index}
-                sx={{
-                  border: '1px white solid',
-                  ':hover': {
-                    border: '1px black solid'
-                  }
-                }}
+                sx={{ border: '1px white solid', ':hover': { border: '1px black solid' } }}
               >
                 <img src={IMAGE_BASE64_PREFIX + item} onClick={() => setSelectedImage(index)} />
               </ImageListItem>
@@ -179,11 +187,73 @@ export function GamePanel({ selected, selectedGamebase }: GamePanelProps): React
           }}
         >
           <strong style={{ textAlign: 'center' }}>{game.name}</strong>
+
           {game.filename && (
-            <Button onClick={() => execute()} color="success" variant="contained">
-              {t('translation:game.play')}
-            </Button>
+            <>
+              {hasMultipleEmulators ? (
+                <>
+                  <ButtonGroup
+                    ref={emulatorAnchorRef}
+                    variant="contained"
+                    color="success"
+                    fullWidth
+                  >
+                    <Button onClick={() => execute(emulators[0].id)} sx={{ flex: 1 }}>
+                      {t('translation:game.play')}
+                    </Button>
+                    <Button
+                      size="small"
+                      onClick={() => setEmulatorMenuOpen((prev) => !prev)}
+                      sx={{ width: '36px', flexShrink: 0 }}
+                    >
+                      <FontAwesomeIcon icon={faChevronDown} />
+                    </Button>
+                  </ButtonGroup>
+
+                  <Popper
+                    open={emulatorMenuOpen}
+                    anchorEl={emulatorAnchorRef.current}
+                    transition
+                    disablePortal
+                    style={{ zIndex: 1 }}
+                  >
+                    {({ TransitionProps, placement }) => (
+                      <Grow
+                        {...TransitionProps}
+                        style={{
+                          transformOrigin: placement === 'bottom' ? 'center top' : 'center bottom'
+                        }}
+                      >
+                        <Paper>
+                          <ClickAwayListener onClickAway={() => setEmulatorMenuOpen(false)}>
+                            <MenuList autoFocusItem>
+                              {emulators.map((emulator) => (
+                                <MenuItem
+                                  key={emulator.id}
+                                  onClick={() => handleEmulatorSelect(emulator.id)}
+                                >
+                                  {emulator.name}
+                                </MenuItem>
+                              ))}
+                            </MenuList>
+                          </ClickAwayListener>
+                        </Paper>
+                      </Grow>
+                    )}
+                  </Popper>
+                </>
+              ) : (
+                <Button
+                  onClick={() => execute(emulators[0]?.id)}
+                  color="success"
+                  variant="contained"
+                >
+                  {t('translation:game.play')}
+                </Button>
+              )}
+            </>
           )}
+
           {game.sidFilename && (
             <Button onClick={() => playMusic()} color="primary" variant="outlined">
               {t('translation:game.music')}

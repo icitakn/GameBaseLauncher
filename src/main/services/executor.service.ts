@@ -35,7 +35,7 @@ function isExecutable(filePath: string): boolean {
   return true
 }
 
-export function execute(gamebase: GameBase, game: Game) {
+export function execute(gamebase: GameBase, game: Game, emulatorId?: string) {
   if (!gamebase || !gamebase.folders || !gamebase.folders.games) {
     log.info('Games folder is not set!')
   }
