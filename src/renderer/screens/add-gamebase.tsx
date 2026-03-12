@@ -34,13 +34,16 @@ export function AddGamebase() {
   }
 
   return (
-    <Stack direction="row" spacing={2} sx={{ padding: '10px', flex: '1' }}>
+    <Stack
+      direction="row"
+      spacing={2}
+      sx={{ padding: '10px', flex: '1', alignItems: 'flex-start' }}
+    >
       <Card
         elevation={4}
         sx={{
           position: 'relative',
           width: '99%',
-          height: '99%',
           display: 'flex',
           flexDirection: 'column',
           p: 2,

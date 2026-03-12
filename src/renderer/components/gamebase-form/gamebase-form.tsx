@@ -1,10 +1,10 @@
-import { Button, Card, CardContent, Container, Stack, Tab, Tabs } from '@mui/material'
-import { useForm } from 'react-hook-form'
+import { Button, Card, CardContent, IconButton, Stack, Tab, Tabs, Typography } from '@mui/material'
+import { useFieldArray, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { t } from 'i18next'
 import { useEffect, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faFile, faFolder } from '@fortawesome/free-solid-svg-icons'
+import { faFile, faFolder, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons'
 import { GamebaseDTO, gamebaseSchema } from '@shared/models/form-schemes.model'
 import { GameBase } from '@shared/models/settings.model'
 import { useFileDialog } from '@renderer/hooks/useFileDialog'
@@ -25,12 +25,11 @@ export function GamebaseForm({ onSubmit, gamebase }: GamebaseFormProps) {
 
   const [importType, setImportType] = useState<ImportType>('mdb')
 
-  const { control, handleSubmit, setValue, getValues } = useForm({
+  const { control, handleSubmit, setValue, getValues, reset } = useForm({
     defaultValues: {
       name: '',
       importFile: '',
       dbFile: '',
-      emulator: '',
       musicplayer: '',
       folders: {
         extractTo: '',
@@ -44,21 +43,29 @@ export function GamebaseForm({ onSubmit, gamebase }: GamebaseFormProps) {
     resolver: yupResolver(gamebaseSchema)
   })
 
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'emulators'
+  })
+
   useEffect(() => {
     if (gamebase) {
-      setValue('name', gamebase.name)
-      setValue('importFile', gamebase.importFile)
-      setValue('dbFile', gamebase.dbFile)
-      setValue('emulator', gamebase.emulator)
-      setValue('musicplayer', gamebase.musicplayer)
-      setValue('folders.extractTo', gamebase.folders?.extractTo)
-      setValue('folders.games', gamebase.folders?.games)
-      setValue('folders.images', gamebase.folders?.images)
-      setValue('folders.music', gamebase.folders?.music)
-      setValue('folders.photos', gamebase.folders?.photos)
-      setValue('gemusScript', gamebase.gemusScript)
+      reset({
+        name: gamebase.name,
+        importFile: gamebase.importFile,
+        dbFile: gamebase.dbFile,
+        emulators: gamebase.emulators ?? [],
+        musicplayer: gamebase.musicplayer,
+        folders: {
+          extractTo: gamebase.folders?.extractTo,
+          games: gamebase.folders?.games,
+          images: gamebase.folders?.images,
+          music: gamebase.folders?.music,
+          photos: gamebase.folders?.photos
+        }
+      })
     }
-  }, [gamebase, setValue])
+  }, [gamebase, setValue, reset])
 
   const submitFn = handleSubmit((data: GamebaseDTO) => {
     if (importType !== 'mdb') {
@@ -73,6 +80,17 @@ export function GamebaseForm({ onSubmit, gamebase }: GamebaseFormProps) {
   const [selectedTab, setSelectedTab] = useState(0)
   const handleTabChange = (event: React.SyntheticEvent, newTab: number) => {
     setSelectedTab(newTab)
+  }
+
+  const handleEmulatorFileClick = async (index: number, key: 'path' | 'gemusScript') => {
+    const selected = await openDialog({
+      mode: 'file',
+      title: t('translation:file_dialog.title'),
+      multiSelect: false,
+      preselectedPath: getValues(`emulators.${index}.${key}`) ?? undefined,
+      rootPath: window.navigator.platform.startsWith('Win') ? 'C:\\' : '/'
+    })
+    setValue(`emulators.${index}.${key}`, selected.path)
   }
 
   const handleFileClick = async (key: keyof GamebaseDTO) => {
@@ -222,35 +240,68 @@ export function GamebaseForm({ onSubmit, gamebase }: GamebaseFormProps) {
 
         <TabPanel value={selectedTab} index={1}>
           <Stack spacing={2} sx={{ display: 'flex', flexDirection: 'column' }}>
-            <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
-              <FormTextField
-                control={control}
-                name="emulator"
-                label={t('translation:gamebase.form_fields.emulator')}
-                sx={{ flexGrow: 1 }}
-              />
-              <Button
-                variant="outlined"
-                color="secondary"
-                onClick={() => handleFileClick('emulator')}
-              >
-                <FontAwesomeIcon icon={faFile}></FontAwesomeIcon>
-              </Button>
-            </Stack>
+            <Stack spacing={3}>
+              {fields.map((field, index) => (
+                <Card key={field.id} variant="outlined" sx={{ p: 2 }}>
+                  <Stack spacing={2}>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                      <Typography variant="subtitle1">
+                        {t('translation:gamebase.form_fields.emulator')} {index + 1}
+                      </Typography>
+                      <IconButton color="error" onClick={() => remove(index)}>
+                        <FontAwesomeIcon icon={faTrash} />
+                      </IconButton>
+                    </Stack>
 
-            <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
-              <FormTextField
-                control={control}
-                name="gemusScript"
-                label={t('translation:gamebase.form_fields.gemus_file')}
-                sx={{ flexGrow: 1 }}
-              />
+                    <FormTextField
+                      control={control}
+                      name={`emulators.${index}.name`}
+                      label={t('translation:gamebase.form_fields.emulator_name')}
+                    />
+
+                    <Stack direction="row" spacing={2}>
+                      <FormTextField
+                        control={control}
+                        name={`emulators.${index}.path`}
+                        label={t('translation:gamebase.form_fields.emulator_path')}
+                        sx={{ flexGrow: 1 }}
+                      />
+                      <Button
+                        variant="outlined"
+                        color="secondary"
+                        onClick={() => handleEmulatorFileClick(index, 'path')}
+                      >
+                        <FontAwesomeIcon icon={faFile} />
+                      </Button>
+                    </Stack>
+
+                    <Stack direction="row" spacing={2}>
+                      <FormTextField
+                        control={control}
+                        name={`emulators.${index}.gemusScript`}
+                        label={t('translation:gamebase.form_fields.gemus_file')}
+                        sx={{ flexGrow: 1 }}
+                      />
+                      <Button
+                        variant="outlined"
+                        color="secondary"
+                        onClick={() => handleEmulatorFileClick(index, 'gemusScript')}
+                      >
+                        <FontAwesomeIcon icon={faFile} />
+                      </Button>
+                    </Stack>
+                  </Stack>
+                </Card>
+              ))}
+
               <Button
                 variant="outlined"
-                color="secondary"
-                onClick={() => handleFileClick('gemusScript')}
+                startIcon={<FontAwesomeIcon icon={faPlus} />}
+                onClick={() =>
+                  append({ id: String(Math.random() * 10000), name: '', path: '', gemusScript: '' })
+                }
               >
-                <FontAwesomeIcon icon={faFile}></FontAwesomeIcon>
+                {t('translation:buttons.add_emulator')}
               </Button>
             </Stack>
 

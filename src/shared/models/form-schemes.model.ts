@@ -1,5 +1,5 @@
 import { t } from 'i18next'
-import { AnyObject, bool, InferType, lazy, number, object, ObjectSchema, string } from 'yup'
+import { AnyObject, array, bool, InferType, lazy, number, object, ObjectSchema, string } from 'yup'
 
 export interface IdLabelObject {
   id: number
@@ -18,12 +18,19 @@ export const refObject = object().shape({
   name: string().nullable()
 })
 
+export const emulatorSchema = object().shape({
+  id: string().required(),
+  name: string().required(t('translation:gamebase.errors.emulator_name_required')),
+  path: string().required(t('translation:gamebase.errors.emulator_path_required')),
+  gemusScript: string().nullable()
+})
+
 export const gamebaseSchema = object().shape({
   id: string().nullable(),
   name: string().required(t('translation:gamebase.errors.name_required')),
   importFile: string(),
   dbFile: string().required(t('translation:gamebase.errors.dbfile_required')),
-  emulator: string().nullable(),
+  emulators: array().of(emulatorSchema),
   musicplayer: string().nullable(),
   folders: object({
     games: string().nullable(),

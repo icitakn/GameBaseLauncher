@@ -1,9 +1,10 @@
 import { UUID } from 'crypto'
 
-export type Command = {
+export type Emulator = {
+  id: string
   name: string
-  executable: string
-  type: string
+  path: string
+  gemusScript?: string | null
 }
 
 export type GameBase = {
@@ -18,11 +19,9 @@ export type GameBase = {
     music?: string | null
     photos?: string | null
   }
-  emulator?: string | null
+  emulators?: Emulator[] | null
   musicplayer?: string | null
-  // commands?: Command[];
   state?: string | null
-  gemusScript?: string | null
 }
 
 export type GamePlayed = {
