@@ -60,7 +60,11 @@ export function execute(gamebase: GameBase, game: Game, emulatorId?: string) {
     }
   }
 
-  const emulator = gamebase.emulators?.find((e) => e.id === emulatorId)
+  const emulator = emulatorId
+    ? gamebase.emulators?.find((e) => e.id === emulatorId)
+    : gamebase.emulators && gamebase.emulators.length > 0
+      ? gamebase.emulators[0]
+      : null
   // -------------------------------------------------------------------------
   // GEMUS Script path
   // -------------------------------------------------------------------------
@@ -87,12 +91,12 @@ export function execute(gamebase: GameBase, game: Game, emulatorId?: string) {
       gamebase,
       game,
       gamepathfile: gamepath,
-      emulatorPath,
+      emulatorPath: resolvedEmulator,
       kvPairs
     }
 
     try {
-      const scriptResult = executeGemusScript(scriptContent, ctx)
+      const scriptResult = executeGemusScript(scriptContent, ctx, resolvedEmulator)
 
       if (!scriptResult.shouldRun) {
         log.info(`[GEMUS] Script decided not to run the game (shouldRun=false)`)
@@ -150,7 +154,7 @@ export function execute(gamebase: GameBase, game: Game, emulatorId?: string) {
     }
   )
 
-  recordGamePlayed(gamebase, game)
+  recordGamePlayed(gamebase, game, emulator?.id)
 }
 
 // ---------------------------------------------------------------------------
@@ -164,7 +168,7 @@ const getFullLabel = (genre: Genre): string => {
   return parentLabel ? parentLabel + ' - ' + name : name
 }
 
-function recordGamePlayed(gamebase: GameBase, game: Game): void {
+function recordGamePlayed(gamebase: GameBase, game: Game, emulatorId?: string): void {
   if (!game.id) return
 
   const settings = getSettings()
@@ -180,6 +184,7 @@ function recordGamePlayed(gamebase: GameBase, game: Game): void {
       ...settings.stats.gamesPlayed,
       {
         gamebaseId: gamebase.id,
+        emulatorId,
         id: game.id,
         genre: game.genre ? getFullLabel(game.genre) : 'Unknown',
         lastPlayedAtMs: new Date().getTime(),

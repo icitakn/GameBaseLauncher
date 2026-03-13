@@ -1,4 +1,4 @@
-import { GameBase } from '@shared/models/settings.model'
+import { Emulator, GameBase } from '@shared/models/settings.model'
 import { Game } from '../entities/game.entity'
 import * as child from 'child_process'
 import * as fs from 'fs'
@@ -320,16 +320,20 @@ export type GemusScriptResult = {
  * Parses and executes a GEMUS script string.
  * Returns the resolved emulator command and parameters.
  */
-export function executeGemusScript(scriptContent: string, ctx: GemusContext): GemusScriptResult {
+export function executeGemusScript(
+  scriptContent: string,
+  ctx: GemusContext,
+  emulator?: string
+): GemusScriptResult {
   const lines = scriptContent.split(/\r?\n/)
   const state: ExecutionState = {
     commandLineParams: '',
     commandLine2Params: '',
-    emulatorExecutable: ctx.gamebase.emulator ?? ''
+    emulatorExecutable: emulator ?? ''
   }
 
   const result: GemusScriptResult = {
-    emulatorExecutable: ctx.gamebase.emulator ?? '',
+    emulatorExecutable: emulator ?? '',
     commandLineParams: '',
     shouldRun: true
   }

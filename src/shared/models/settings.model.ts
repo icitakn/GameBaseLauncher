@@ -26,6 +26,7 @@ export type GameBase = {
 
 export type GamePlayed = {
   gamebaseId: UUID
+  emulatorId?: string
   id: number
   name: string
   genre: string
