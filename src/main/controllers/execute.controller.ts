@@ -6,19 +6,22 @@ import { execute, playMusic } from '../services/executor.service'
 import { Music } from '../entities/music.entity'
 
 export const registerExecuteController = () => {
-  ipcMain.handle('execute:game', async (_, gamebaseId: UUID, gameId: number) => {
-    const { db, gamebase } = await loadGamebase(gamebaseId)
+  ipcMain.handle(
+    'execute:game',
+    async (_, gamebaseId: UUID, gameId: number, emulatorId?: string) => {
+      const { db, gamebase } = await loadGamebase(gamebaseId)
 
-    if (gamebase) {
-      const game = await db.em
-        .fork()
-        .findOne(Game, [gameId], { populate: ['genre', 'genre.parent'] })
+      if (gamebase) {
+        const game = await db.em
+          .fork()
+          .findOne(Game, [gameId], { populate: ['genre', 'genre.parent'] })
 
-      if (game) {
-        execute(gamebase, game)
+        if (game) {
+          execute(gamebase, game, emulatorId)
+        }
       }
     }
-  })
+  )
 
   ipcMain.handle(
     'execute:music',

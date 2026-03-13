@@ -11,6 +11,7 @@
   },
   "buttons": {
     "add": "Hinzufügen",
+    "add_emulator": "Emulator hinzufügen",
     "edit": "Editieren",
     "delete": "Löschen",
     "save": "Speichern",
@@ -39,6 +40,7 @@
     "developers": "Entwickler",
     "crackers": "Cracker",
     "musics": "Musik",
+    "masterdata": "Stammdaten",
     "gb_settings": "GB Einstellungen",
     "add_gamebase": "Füge eine neue Gamebase hinzu",
     "app_settings": "App Einstellungen"
@@ -64,6 +66,8 @@
       "importfile": "Importiere mdb Datei",
       "db_file": "Datenbank-Datei",
       "emulator": "Emulator",
+      "emulator_name": "Name",
+      "emulator_path": "Pfad",
       "music_player": "Music player",
       "extract_zip_to": "Extrahiere zip nach",
       "games_folder": "Spieleordner",
@@ -74,7 +78,9 @@
     },
     "errors": {
       "name_required": "Bitte gib einen Namen ein.",
-      "dbfile_required": "Bitte wähle eine existierende db Datei oder gib den Namen einer neuen ein."
+      "dbfile_required": "Bitte wähle eine existierende db Datei oder gib den Namen einer neuen ein.",
+      "emulator_name_required": "Bitte gib einen Namen für den Emulator ein.",
+      "emulator_path_required": "Bitte trage eine ausführbare Datei für den Emulator ein selektiere eine."
     },
     "messages": {
       "confirm_delete": "Bist du sicher, dass du diese Gamebase löschen möchtest?",
@@ -83,6 +89,8 @@
     },
     "tabs": {
       "general": "Allgemein",
+      "external_apps": "Programme",
+      "folders": "Ordner",
       "genres": "Genres",
       "languages": "Sprachen",
       "difficulties": "Schwierigkeitsgrade",

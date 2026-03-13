@@ -15,6 +15,7 @@ import {
   faAngleDown,
   faArrowsSplitUpAndLeft,
   faCog,
+  faDatabase,
   faGamepad,
   faGuitar,
   faLaptopCode,
@@ -176,6 +177,11 @@ export function Menubar() {
       uri: '/musics',
       label: t('translation:menu.musics'),
       icon: <FontAwesomeIcon icon={faMusic} />
+    },
+    {
+      uri: '/masterdata',
+      label: t('translation:menu.masterdata'),
+      icon: <FontAwesomeIcon icon={faDatabase} />
     },
     {
       uri: '/edit',

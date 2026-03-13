@@ -14,6 +14,7 @@ import { Crackers } from './screens/crackers'
 import Dashboard from './screens/dashboard'
 import { ReactNode } from 'react'
 import Layout from './layout'
+import { Masterdata } from './screens/masterdata'
 
 export default function Router(): ReactNode {
   const routes = useRoutes([
@@ -67,6 +68,10 @@ export default function Router(): ReactNode {
         {
           path: '/gamebase/:gamebaseId/crackers',
           element: <Crackers />
+        },
+        {
+          path: '/gamebase/:gamebaseId/masterdata',
+          element: <Masterdata />
         },
         {
           path: '/settings',
