@@ -29,6 +29,7 @@ import { SettingsContext } from '../contexts/settings.context'
 import { GamePlayed, MusicListened } from '@shared/models/settings.model'
 import { formatLastPlayed, formatPlaytime } from '../lib/datetime-utils'
 import { t } from 'i18next'
+import { toast } from 'react-toastify'
 
 const Dashboard = () => {
   const { settings, setSettings } = useContext(SettingsContext)
@@ -106,10 +107,14 @@ const Dashboard = () => {
     </Card>
   )
 
-  function handleStartGame(game: GamePlayed): void {
+  async function handleStartGame(game: GamePlayed) {
     setModalMsg(t('translation:common.starting') + ' ' + game.name)
     setOpen(true)
-    window.electron.execute(game.gamebaseId, game.id)
+    try {
+      await window.electron.execute(game.gamebaseId, game.id, game.emulatorId)
+    } catch (error) {
+      toast.error(t('common.error_occured') + error)
+    }
   }
 
   function handlePlayMusic(music: MusicListened): void {

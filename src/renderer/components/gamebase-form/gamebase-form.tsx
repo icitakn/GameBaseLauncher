@@ -415,7 +415,7 @@ export function GamebaseForm({ onSubmit, gamebase }: GamebaseFormProps) {
           )}
 
           <Button variant="contained" color="primary" type="submit" sx={{ flex: 1 }}>
-            {gamebase ? t('translation:buttons.edit') : t('translation:buttons.add')}
+            {gamebase ? t('translation:buttons.save') : t('translation:buttons.add')}
           </Button>
         </Stack>
       </Stack>
