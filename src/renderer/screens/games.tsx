@@ -10,18 +10,12 @@ import { ColumnOption } from '../components/column-picker/column-picker-dialog'
 
 const columnHelper = createColumnHelper<GameDTO>()
 
-/**
- * Alle verfügbaren Spalten für die Games-Tabelle.
- * Einfach neue Einträge hinzufügen oder entfernen.
- * Die Reihenfolge hier bestimmt die Reihenfolge im Picker-Dialog
- * und in der Tabelle.
- */
 const ALL_GAME_COLUMNS: ColumnOption<GameDTO>[] = [
   {
     key: 'id',
-    label: 'ID',
+    label: t('forms.fields.id'),
     column: columnHelper.accessor('id', {
-      header: 'ID',
+      header: t('forms.fields.id'),
       enableColumnFilter: true,
       filterFn: 'includesString',
       cell: (info) => info.getValue()?.toString()
@@ -29,40 +23,39 @@ const ALL_GAME_COLUMNS: ColumnOption<GameDTO>[] = [
   },
   {
     key: 'name',
-    label: 'Name',
+    label: t('forms.fields.name'),
     column: columnHelper.accessor('name', {
-      header: 'NAME',
+      header: t('forms.fields.name'),
       enableColumnFilter: true
     })
   },
   {
     key: 'year',
-    label: 'Jahr',
+    label: t('game.year'),
     column: columnHelper.accessor('year', {
-      header: 'JAHR',
+      header: t('game.year'),
       enableSorting: true,
       cell: (info) => info.getValue() ?? ''
     })
   },
   {
     key: 'genre',
-    label: 'Genre',
+    label: t('game.genre'),
     column: columnHelper.accessor('genre', {
-      header: 'GENRE',
+      header: t('game.genre'),
       enableColumnFilter: true,
       cell: (info) => {
         const val = info.getValue()
         if (!val) return ''
-        // genre kann ein Objekt mit name-Feld oder ein primitiver Wert sein
         return typeof val === 'object' && 'name' in val ? (val as any).name : String(val)
       }
     })
   },
   {
     key: 'publisher',
-    label: 'Publisher',
+    label: t('game.publisher'),
     column: columnHelper.accessor('publisher', {
-      header: 'PUBLISHER',
+      header: t('game.publisher'),
       enableColumnFilter: true,
       cell: (info) => {
         const val = info.getValue()
@@ -73,9 +66,9 @@ const ALL_GAME_COLUMNS: ColumnOption<GameDTO>[] = [
   },
   {
     key: 'developer',
-    label: 'Entwickler',
+    label: t('game.developer'),
     column: columnHelper.accessor('developer', {
-      header: 'ENTWICKLER',
+      header: t('game.developer'),
       enableColumnFilter: true,
       cell: (info) => {
         const val = info.getValue()
@@ -86,9 +79,9 @@ const ALL_GAME_COLUMNS: ColumnOption<GameDTO>[] = [
   },
   {
     key: 'programmer',
-    label: 'Programmierer',
+    label: t('game.programmer'),
     column: columnHelper.accessor('programmer', {
-      header: 'PROGRAMMIERER',
+      header: t('game.programmer'),
       enableColumnFilter: true,
       cell: (info) => {
         const val = info.getValue()
@@ -99,9 +92,9 @@ const ALL_GAME_COLUMNS: ColumnOption<GameDTO>[] = [
   },
   {
     key: 'musician',
-    label: 'Musiker',
+    label: t('game.musician'),
     column: columnHelper.accessor('musician', {
-      header: 'MUSIKER',
+      header: t('game.musician'),
       enableColumnFilter: true,
       cell: (info) => {
         const val = info.getValue()
