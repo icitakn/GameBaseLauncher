@@ -5,17 +5,23 @@ import { GameForm } from '../components/forms/game-form'
 import useEntityStore from '../hooks/useEntityStore'
 import { useMemo } from 'react'
 import { GameDTO } from '@shared/models/form-schemes.model'
-import { t } from 'i18next'
+import { useTranslation } from 'react-i18next'
 import { ColumnOption } from '../components/column-picker/column-picker-dialog'
 
 const columnHelper = createColumnHelper<GameDTO>()
 
-const ALL_GAME_COLUMNS: ColumnOption<GameDTO>[] = [
+/** Hilfsfunktion: gibt den Anzeigenamen eines relationalen Felds zurück */
+const nameOf = (val: unknown): string => {
+  if (!val) return ''
+  return typeof val === 'object' && 'name' in val ? (val as { name: string }).name : String(val)
+}
+
+const buildGameColumns = (t: (key: string) => string): ColumnOption<GameDTO>[] => [
   {
     key: 'id',
-    label: t('forms.fields.id'),
+    label: t('translation:forms.fields.id'),
     column: columnHelper.accessor('id', {
-      header: t('forms.fields.id'),
+      header: t('translation:forms.fields.id'),
       enableColumnFilter: true,
       filterFn: 'includesString',
       cell: (info) => info.getValue()?.toString()
@@ -23,149 +29,155 @@ const ALL_GAME_COLUMNS: ColumnOption<GameDTO>[] = [
   },
   {
     key: 'name',
-    label: t('forms.fields.name'),
+    label: t('translation:forms.fields.name'),
     column: columnHelper.accessor('name', {
-      header: t('forms.fields.name'),
+      header: t('translation:forms.fields.name'),
       enableColumnFilter: true
     })
   },
   {
     key: 'year',
-    label: t('game.year'),
+    label: t('translation:game.year'),
     column: columnHelper.accessor('year', {
-      header: t('game.year'),
+      header: t('translation:game.year'),
       enableSorting: true,
       cell: (info) => info.getValue() ?? ''
     })
   },
   {
     key: 'genre',
-    label: t('game.genre'),
+    label: t('translation:game.genre'),
     column: columnHelper.accessor('genre', {
-      header: t('game.genre'),
+      header: t('translation:game.genre'),
       enableColumnFilter: true,
-      cell: (info) => {
-        const val = info.getValue()
-        if (!val) return ''
-        return typeof val === 'object' && 'name' in val ? (val as any).name : String(val)
-      }
+      cell: (info) => nameOf(info.getValue())
     })
   },
   {
     key: 'publisher',
-    label: t('game.publisher'),
+    label: t('translation:game.publisher'),
     column: columnHelper.accessor('publisher', {
-      header: t('game.publisher'),
+      header: t('translation:game.publisher'),
       enableColumnFilter: true,
-      cell: (info) => {
-        const val = info.getValue()
-        if (!val) return ''
-        return typeof val === 'object' && 'name' in val ? (val as any).name : String(val)
-      }
+      cell: (info) => nameOf(info.getValue())
     })
   },
   {
     key: 'developer',
-    label: t('game.developer'),
+    label: t('translation:game.developer'),
     column: columnHelper.accessor('developer', {
-      header: t('game.developer'),
+      header: t('translation:game.developer'),
       enableColumnFilter: true,
-      cell: (info) => {
-        const val = info.getValue()
-        if (!val) return ''
-        return typeof val === 'object' && 'name' in val ? (val as any).name : String(val)
-      }
+      cell: (info) => nameOf(info.getValue())
     })
   },
   {
     key: 'programmer',
-    label: t('game.programmer'),
+    label: t('translation:game.programmer'),
     column: columnHelper.accessor('programmer', {
-      header: t('game.programmer'),
+      header: t('translation:game.programmer'),
       enableColumnFilter: true,
-      cell: (info) => {
-        const val = info.getValue()
-        if (!val) return ''
-        return typeof val === 'object' && 'name' in val ? (val as any).name : String(val)
-      }
+      cell: (info) => nameOf(info.getValue())
     })
   },
   {
     key: 'musician',
-    label: t('game.musician'),
+    label: t('translation:game.musician'),
     column: columnHelper.accessor('musician', {
-      header: t('game.musician'),
+      header: t('translation:game.musician'),
       enableColumnFilter: true,
-      cell: (info) => {
-        const val = info.getValue()
-        if (!val) return ''
-        return typeof val === 'object' && 'name' in val ? (val as any).name : String(val)
-      }
+      cell: (info) => nameOf(info.getValue())
+    })
+  },
+  {
+    key: 'artist',
+    label: t('translation:game.artist'),
+    column: columnHelper.accessor('artist', {
+      header: t('translation:game.artist'),
+      enableColumnFilter: true,
+      cell: (info) => nameOf(info.getValue())
     })
   },
   {
     key: 'language',
-    label: 'Sprache',
+    label: t('translation:game.language'),
     column: columnHelper.accessor('language', {
-      header: 'SPRACHE',
+      header: t('translation:game.language'),
       enableColumnFilter: true,
-      cell: (info) => {
-        const val = info.getValue()
-        if (!val) return ''
-        return typeof val === 'object' && 'name' in val ? (val as any).name : String(val)
-      }
+      cell: (info) => nameOf(info.getValue())
     })
   },
   {
     key: 'difficulty',
-    label: 'Schwierigkeit',
+    label: t('translation:game.difficulty'),
     column: columnHelper.accessor('difficulty', {
-      header: 'SCHWIERIGKEIT',
-      cell: (info) => {
-        const val = info.getValue()
-        if (!val) return ''
-        return typeof val === 'object' && 'name' in val ? (val as any).name : String(val)
-      }
+      header: t('translation:game.difficulty'),
+      cell: (info) => nameOf(info.getValue())
+    })
+  },
+  {
+    key: 'rarity',
+    label: t('translation:game.rarity'),
+    column: columnHelper.accessor('rarity', {
+      header: t('translation:game.rarity'),
+      cell: (info) => nameOf(info.getValue())
+    })
+  },
+  {
+    key: 'license',
+    label: t('translation:game.license'),
+    column: columnHelper.accessor('license', {
+      header: t('translation:game.license'),
+      cell: (info) => nameOf(info.getValue())
     })
   },
   {
     key: 'rating',
-    label: 'Bewertung',
+    label: t('translation:game.rating'),
     column: columnHelper.accessor('rating', {
-      header: 'BEWERTUNG',
+      header: t('translation:game.rating'),
+      enableSorting: true,
+      cell: (info) => info.getValue() ?? ''
+    })
+  },
+  {
+    key: 'reviewRating',
+    label: t('translation:game.review_rating'),
+    column: columnHelper.accessor('reviewRating', {
+      header: t('translation:game.review_rating'),
       enableSorting: true,
       cell: (info) => info.getValue() ?? ''
     })
   },
   {
     key: 'classic',
-    label: 'Klassiker',
+    label: t('translation:forms.game.fields.ratings.classic'),
     column: columnHelper.accessor('classic', {
-      header: 'KLASSIKER',
+      header: t('translation:forms.game.fields.ratings.classic'),
       cell: (info) => (info.getValue() ? '★' : '')
     })
   },
   {
     key: 'playersFrom',
-    label: 'Spieler (von)',
+    label: t('translation:game.player_number_min'),
     column: columnHelper.accessor('playersFrom', {
-      header: 'SPIELER VON',
+      header: t('translation:game.player_number_min'),
       cell: (info) => info.getValue() ?? ''
     })
   },
   {
     key: 'playersTo',
-    label: 'Spieler (bis)',
+    label: t('translation:game.player_number_max'),
     column: columnHelper.accessor('playersTo', {
-      header: 'SPIELER BIS',
+      header: t('translation:game.player_number_max'),
       cell: (info) => info.getValue() ?? ''
     })
   },
   {
     key: 'length',
-    label: 'Länge',
+    label: t('translation:game.game_length'),
     column: columnHelper.accessor('length', {
-      header: 'LÄNGE',
+      header: t('translation:game.game_length'),
       cell: (info) => info.getValue() ?? ''
     })
   },
@@ -179,25 +191,41 @@ const ALL_GAME_COLUMNS: ColumnOption<GameDTO>[] = [
   },
   {
     key: 'fav',
-    label: 'Favorit',
+    label: t('translation:game.favorite'),
     column: columnHelper.accessor('fav', {
-      header: 'FAV',
+      header: t('translation:game.favorite'),
       cell: (info) => (info.getValue() ? '♥' : '')
     })
   },
   {
     key: 'adult',
-    label: 'FSK 18',
+    label: t('translation:game.adult'),
     column: columnHelper.accessor('adult', {
-      header: 'ADULT',
+      header: t('translation:game.adult'),
+      cell: (info) => (info.getValue() ? '✓' : '')
+    })
+  },
+  {
+    key: 'playable',
+    label: t('translation:game.playable'),
+    column: columnHelper.accessor('playable', {
+      header: t('translation:game.playable'),
+      cell: (info) => (info.getValue() ? '✓' : '')
+    })
+  },
+  {
+    key: 'original',
+    label: t('translation:game.original'),
+    column: columnHelper.accessor('original', {
+      header: t('translation:game.original'),
       cell: (info) => (info.getValue() ? '✓' : '')
     })
   },
   {
     key: 'filename',
-    label: 'Dateiname',
+    label: t('translation:game.filename'),
     column: columnHelper.accessor('filename', {
-      header: 'DATEINAME',
+      header: t('translation:game.filename'),
       enableColumnFilter: true
     })
   }
@@ -207,9 +235,16 @@ const ALL_GAME_COLUMNS: ColumnOption<GameDTO>[] = [
 const DEFAULT_COLUMN_KEYS = ['id', 'name']
 
 export default function Games() {
+  const { t } = useTranslation()
+
+  const availableColumns = useMemo<ColumnOption<GameDTO>[]>(
+    () => buildGameColumns(t as (key: string) => string),
+    [t]
+  )
+
   const defaultColumns = useMemo(
-    () => ALL_GAME_COLUMNS.filter((c) => DEFAULT_COLUMN_KEYS.includes(c.key)).map((c) => c.column),
-    []
+    () => availableColumns.filter((c) => DEFAULT_COLUMN_KEYS.includes(c.key)).map((c) => c.column),
+    [availableColumns]
   )
 
   const createNew = (): GameDTO => ({
@@ -273,10 +308,10 @@ export default function Games() {
   return (
     <MasterDetail
       columns={defaultColumns}
-      availableColumns={ALL_GAME_COLUMNS}
+      availableColumns={availableColumns}
       tableName="Game"
       DetailsPanel={GamePanel}
-      title={t('translation:menu.games')}
+      title={t('menu.games')}
       EditForm={GameForm}
       createNew={createNew}
       data={gameStore}

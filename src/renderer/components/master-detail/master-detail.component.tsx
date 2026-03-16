@@ -6,6 +6,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
   Stack,
   Typography
 } from '@mui/material'
@@ -20,6 +21,8 @@ import { t } from 'i18next'
 import { useConfirmDialog } from '@renderer/hooks/useConfirmDialog'
 import useEntityStore from '@renderer/hooks/useEntityStore'
 import { ColumnPickerDialog, ColumnOption } from '../column-picker/column-picker-dialog'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faTableColumns } from '@fortawesome/free-solid-svg-icons'
 
 export interface DetailsProps<T> {
   selected: T
@@ -195,7 +198,6 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
         </DialogActions>
       </Dialog>
 
-      {/* Spalten-Picker-Dialog */}
       {availableColumns && (
         <ColumnPickerDialog<T>
           open={isColumnPickerOpen}
@@ -239,11 +241,10 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
               {t('translation:buttons.add')}
             </Button>
 
-            {/* Spalten-Button – nur wenn availableColumns übergeben wurde */}
             {availableColumns && (
-              <Button variant="outlined" onClick={() => setColumnPickerOpen(true)}>
-                {t('translation:buttons.columns', 'Spalten')}
-              </Button>
+              <IconButton onClick={() => setColumnPickerOpen(true)}>
+                <FontAwesomeIcon icon={faTableColumns} />
+              </IconButton>
             )}
           </Stack>
 

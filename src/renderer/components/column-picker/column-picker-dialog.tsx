@@ -7,17 +7,14 @@ import {
   DialogContent,
   DialogTitle,
   FormControlLabel,
-  Stack,
-  Typography
+  Stack
 } from '@mui/material'
 import { ColumnDef } from '@tanstack/react-table'
+import { t } from 'i18next'
 
 export interface ColumnOption<T> {
-  /** Interner Schlüssel – muss eindeutig sein (z. B. der accessor-Key) */
   key: string
-  /** Anzeigename im Dialog */
   label: string
-  /** Die vollständige TanStack-ColumnDef */
   column: ColumnDef<T, any>
 }
 
@@ -38,43 +35,35 @@ export function ColumnPickerDialog<T>({
 }: ColumnPickerDialogProps<T>) {
   const [localKeys, setLocalKeys] = useState<string[]>(activeKeys)
 
-  // Lokalen State synchronisieren, wenn der Dialog geöffnet wird
   React.useEffect(() => {
     if (open) setLocalKeys(activeKeys)
   }, [open, activeKeys])
 
   const toggle = (key: string) => {
-    setLocalKeys((prev) =>
-      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
-    )
+    setLocalKeys((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]))
   }
 
   const handleApply = () => {
-    // Reihenfolge der availableColumns beibehalten
-    const ordered = availableColumns
-      .map((c) => c.key)
-      .filter((k) => localKeys.includes(k))
+    const ordered = availableColumns.map((c) => c.key).filter((k) => localKeys.includes(k))
     onChange(ordered)
     onClose()
   }
 
-  const handleSelectAll = () =>
-    setLocalKeys(availableColumns.map((c) => c.key))
+  const handleSelectAll = () => setLocalKeys(availableColumns.map((c) => c.key))
 
   const handleDeselectAll = () =>
-    // id immer aktiv lassen
     setLocalKeys(availableColumns.filter((c) => c.key === 'id').map((c) => c.key))
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle>Spalten auswählen</DialogTitle>
+      <DialogTitle>{t('column_dialog.title')}</DialogTitle>
       <DialogContent dividers>
         <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
           <Button size="small" onClick={handleSelectAll}>
-            Alle
+            {t('column_dialog.all')}
           </Button>
           <Button size="small" onClick={handleDeselectAll}>
-            Keine
+            {t('column_dialog.none')}
           </Button>
         </Stack>
         <Stack direction="column">
@@ -85,7 +74,6 @@ export function ColumnPickerDialog<T>({
                 <Checkbox
                   checked={localKeys.includes(col.key)}
                   onChange={() => toggle(col.key)}
-                  // id-Spalte kann nicht abgewählt werden
                   disabled={col.key === 'id'}
                 />
               }
@@ -95,9 +83,9 @@ export function ColumnPickerDialog<T>({
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Abbrechen</Button>
+        <Button onClick={onClose}>{t('buttons.cancel')}</Button>
         <Button onClick={handleApply} variant="contained">
-          Übernehmen
+          {t('buttons.ok')}
         </Button>
       </DialogActions>
     </Dialog>
