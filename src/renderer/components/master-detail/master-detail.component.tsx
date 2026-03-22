@@ -225,22 +225,23 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
             {title} ({data.length} {t('translation:common.entries')})
           </Typography>
 
-          <Stack direction="row" spacing={2} sx={{ flexShrink: 0 }}>
-            <Button
-              variant="contained"
-              color="error"
-              disabled={!selected}
-              onClick={() => handleDeleteClick(selected!)}
-            >
-              {t('translation:buttons.delete')}
-            </Button>
-            <Button variant="outlined" disabled={!selected} onClick={() => setEdit(selected)}>
-              {t('translation:buttons.edit')}
-            </Button>
-            <Button variant="contained" onClick={() => setEdit(createNew())}>
-              {t('translation:buttons.add')}
-            </Button>
-
+          <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
+            <Stack direction="row" spacing={2} sx={{ flexShrink: 0 }}>
+              <Button
+                variant="contained"
+                color="error"
+                disabled={!selected}
+                onClick={() => handleDeleteClick(selected!)}
+              >
+                {t('translation:buttons.delete')}
+              </Button>
+              <Button variant="outlined" disabled={!selected} onClick={() => setEdit(selected)}>
+                {t('translation:buttons.edit')}
+              </Button>
+              <Button variant="contained" onClick={() => setEdit(createNew())}>
+                {t('translation:buttons.add')}
+              </Button>
+            </Stack>
             {availableColumns && (
               <IconButton onClick={() => setColumnPickerOpen(true)}>
                 <FontAwesomeIcon icon={faTableColumns} />
