@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Button,
   Card,
@@ -61,14 +61,17 @@ export interface MasterDetailProps<T> {
   EditForm: React.ForwardRefExoticComponent<EditFormProps<T> & React.RefAttributes<FormHandle>>
   createNew: () => T
   data: T[]
-  loadData: (gamebaseId: UUID) => Promise<void>
+  loadData: (gamebaseId: UUID, fields?: string[]) => Promise<void>
 }
 
 /** Liest aktive Spalten-Keys aus localStorage, Fallback: Standardspalten */
 function getStoredColumnKeys(storageKey: string, defaultKeys: string[]): string[] {
   try {
     const stored = localStorage.getItem(storageKey)
-    if (stored) return JSON.parse(stored) as string[]
+    if (stored) {
+      const parsed = JSON.parse(stored) as string[]
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed
+    }
   } catch {
     // ignore
   }
@@ -97,37 +100,44 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
   // localStorage-Schlüssel pro Tabelle, damit jede Entität ihre eigene Auswahl hat
   const storageKey = `column-selection-${tableName}`
 
-  // Standardmäßig aktive Keys = alle Keys aus dem columns-Prop
-  const defaultActiveKeys: string[] = columns.map((col) => {
-    // TanStack accessor columns haben entweder accessorKey oder id
-    const c = col as { accessorKey?: string; id?: string }
-    return c.accessorKey ?? c.id ?? ''
-  })
+  // Standardmäßig aktive Keys = Keys aus dem columns-Prop
+  const defaultActiveKeys = useMemo<string[]>(
+    () =>
+      columns.map((col) => {
+        const c = col as { accessorKey?: string; id?: string }
+        return c.accessorKey ?? c.id ?? ''
+      }),
+    [columns]
+  )
 
   const [activeColumnKeys, setActiveColumnKeys] = useState<string[]>(() =>
     availableColumns ? getStoredColumnKeys(storageKey, defaultActiveKeys) : defaultActiveKeys
   )
 
-  // Aktive Spalten aus der Gesamtliste filtern, Reihenfolge beibehalten
-  const tableColumns = availableColumns
-    ? availableColumns.filter((c) => activeColumnKeys.includes(c.key)).map((c) => c.column)
-    : columns
+  // ── KERN-FIX 1 ────────────────────────────────────────────────────────────
+  // tableColumns muss via useMemo auf activeColumnKeys reagieren.
+  // Ohne useMemo wird das Array bei jedem Render neu erzeugt – TanStack Table
+  // erhält zwar ein neues Array-Objekt, aber intern gleiche Column-Referenzen,
+  // und baut die Tabelle nicht neu auf.
+  const tableColumns = useMemo(() => {
+    if (!availableColumns) return columns
+    return availableColumns.filter((c) => activeColumnKeys.includes(c.key)).map((c) => c.column)
+  }, [availableColumns, activeColumnKeys, columns])
+  // ──────────────────────────────────────────────────────────────────────────
 
   const formRef = useRef<FormHandle>(null)
 
+  // Neu laden wenn Gamebase wechselt ODER wenn sich die aktiven Spalten ändern,
+  // damit das Backend genau die benötigten Felder (inkl. FK-Populates) lädt.
   useEffect(() => {
-    if (selectedGamebase && (!data || data.length === 0)) {
-      setLoading(true)
-      loadData(selectedGamebase.id)
-    }
-  }, [selectedGamebase, data])
+    if (!selectedGamebase) return
+    setLoading(true)
+    loadData(selectedGamebase.id, activeColumnKeys).finally(() => setLoading(false))
+  }, [selectedGamebase, activeColumnKeys])
+  // ──────────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    if (data) setLoading(false)
-  }, [data])
-
-  useEffect(() => {
-    setEditDialogOpen(edit ? true : false)
+    setEditDialogOpen(edit != null)
   }, [edit])
 
   const handleColumnChange = (keys: string[]) => {
@@ -174,8 +184,6 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
       .catch(() => {})
   }
 
-  const isFormValid = formRef.current?.isValid ?? false
-
   return (
     <Stack
       direction="row"
@@ -198,6 +206,7 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
         </DialogActions>
       </Dialog>
 
+      {/* Spalten-Picker-Dialog */}
       {availableColumns && (
         <ColumnPickerDialog<T>
           open={isColumnPickerOpen}

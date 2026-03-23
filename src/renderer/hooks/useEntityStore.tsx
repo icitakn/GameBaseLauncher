@@ -93,7 +93,7 @@ interface State {
   loadDevelopers: (gamebaseId: UUID) => Promise<void>
   loadArtists: (gamebaseId: UUID) => Promise<void>
   loadCrackers: (gamebaseId: UUID) => Promise<void>
-  loadGames: (gamebaseId: UUID) => Promise<void>
+  loadGames: (gamebaseId: UUID, fields?: string[]) => Promise<void>
   loadExtras: (gamebaseId: UUID) => Promise<void>
 
   loadGenres: (gamebaseId: UUID) => Promise<void>
@@ -491,7 +491,7 @@ const useEntityStore = create<State>((set, get) => ({
     await loader(gamebaseId, set)
   },
 
-  loadGames: async (gamebaseId: UUID) => {
+  loadGames: async (gamebaseId: UUID, fields?: string[]) => {
     try {
       set((state: State) => ({
         ...state,
@@ -518,7 +518,9 @@ const useEntityStore = create<State>((set, get) => ({
         }
       })
 
-      const games: GameDTO[] = await window.electron.getSlim('Game', gamebaseId)
+      // fields explizit übergeben; fehlt der Parameter, greift das Backend
+      // auf SLIM_FIELDS['Game'] = ['id', 'name'] zurück
+      const games: GameDTO[] = await window.electron.getSlim('Game', gamebaseId, fields)
 
       removeListener()
 

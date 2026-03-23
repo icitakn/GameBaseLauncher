@@ -79,6 +79,51 @@ const SLIM_FIELDS: Partial<Record<string, string[]>> = {
   Game: ['id', 'name']
 }
 
+/**
+ * FK-Felder des Game-Entities, die ein populate benötigen damit MikroORM
+ * nicht nur einen unaufgelösten Proxy zurückgibt.
+ * Schlüssel = Feldname im DTO/Entity, Wert = populate-Pfad(e).
+ */
+const GAME_FK_FIELDS: Record<string, string[]> = {
+  musician: ['musician'],
+  genre: ['genre', 'genre.parent'],
+  publisher: ['publisher'],
+  difficulty: ['difficulty'],
+  cracker: ['cracker'],
+  programmer: ['programmer'],
+  language: ['language'],
+  prequel: ['prequel'],
+  sequel: ['sequel'],
+  related: ['related'],
+  artist: ['artist'],
+  developer: ['developer'],
+  license: ['license'],
+  rarity: ['rarity'],
+  cloneOf: ['cloneOf']
+}
+
+/**
+ * Leitet aus einer Liste von angeforderten Feldern die nötigen populate-Pfade ab.
+ * Primitive Felder (year, rating, …) brauchen kein populate.
+ */
+const getSlimPopulates = (
+  tableName: string,
+  fields: string[]
+): FindOptions<any, any, PopulatePath.ALL, never> => {
+  if (tableName !== 'Game') return {}
+
+  const populatePaths = new Set<string>()
+  for (const field of fields) {
+    const paths = GAME_FK_FIELDS[field]
+    if (paths) {
+      paths.forEach((p) => populatePaths.add(p))
+    }
+  }
+
+  if (populatePaths.size === 0) return {}
+  return { populate: [...populatePaths] as any }
+}
+
 export const registerEntityController = () => {
   ipcMain.handle(
     'entity:getAll',
@@ -118,11 +163,32 @@ export const registerEntityController = () => {
     async (event, tableName: string, gamebaseId: UUID, fields?: string[]) => {
       const { db } = await loadGamebase(gamebaseId)
 
+      const effectiveFields = fields ?? SLIM_FIELDS[tableName]
+
       const populateOptions: FindOptions<any, any, PopulatePath.ALL, never> = {}
 
-      const effectiveFields = fields ?? SLIM_FIELDS[tableName]
       if (effectiveFields) {
-        Object.assign(populateOptions, { fields: effectiveFields })
+        // Für FK-Felder (z. B. 'genre') müssen wir MikroORM explizit sagen,
+        // welche Sub-Felder geladen werden sollen (genre.id, genre.name).
+        // Ohne das liefert MikroORM nur einen unaufgelösten Proxy.
+        const expandedFields: string[] = []
+        for (const field of effectiveFields) {
+          if (GAME_FK_FIELDS[field]) {
+            // FK-Feld: id + name des verknüpften Objekts mitladen
+            expandedFields.push(`${field}.id`, `${field}.name`)
+            // genre hat zusätzlich ein parent
+            if (field === 'genre') {
+              expandedFields.push('genre.parent.id', 'genre.parent.name')
+            }
+          } else {
+            expandedFields.push(field)
+          }
+        }
+        Object.assign(populateOptions, { fields: expandedFields })
+
+        // populate-Pfade für FK-Felder ergänzen
+        const fkPopulates = getSlimPopulates(tableName, effectiveFields)
+        Object.assign(populateOptions, fkPopulates)
       }
 
       const result = await getAllBatched(db, tableName, {}, populateOptions, {

@@ -1,6 +1,5 @@
 import { Box, CircularProgress, Stack, TableCell, TableRow, useTheme } from '@mui/material'
 import React, {
-  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -141,16 +140,17 @@ export default function DataTable<T>({
     }
   }, [rowSelection, rows, onSelectionChange])
 
-  const headerGroups = useMemo(() => table.getHeaderGroups(), [table])
-
-  const fixedHeaderContent = useCallback((): ReactNode => {
-    if (noHeader) {
-      return null
-    }
-    return headerGroups.map((headerGroup) => (
-      <TableHeader<T> key={headerGroup.id} headerGroup={headerGroup} />
-    ))
-  }, [headerGroups, noHeader])
+  // fixedHeaderContent darf KEIN useCallback mit stabiler Referenz sein –
+  // react-virtuoso cached components und ruft fixedHeaderContent nur neu auf,
+  // wenn es eine neue Funktionsreferenz bekommt. Direkte Definition ohne
+  // Memoization sorgt dafür, dass Header bei jeder Spaltenänderung neu
+  // gerendert werden.
+  const fixedHeaderContent = (): ReactNode => {
+    if (noHeader) return null
+    return table
+      .getHeaderGroups()
+      .map((headerGroup) => <TableHeader<T> key={headerGroup.id} headerGroup={headerGroup} />)
+  }
 
   const TableComponent = useMemo(
     () =>
@@ -171,39 +171,41 @@ export default function DataTable<T>({
     []
   ) as ComponentType<TableProps & ContextProp<unknown>>
 
-  const TableRowComponent = useCallback(
-    (
-      props: React.DetailedHTMLProps<React.HTMLAttributes<HTMLTableRowElement>, HTMLTableRowElement>
-    ) => {
-      // eslint-disable-next-line react/prop-types
-      const index = props['data-index'] as number
-      const row = rows[index] as Tanstack.Row<T>
+  // TableRowComponent ebenfalls ohne useCallback – Virtuoso muss bei jedem
+  // Render eine neue Referenz sehen, damit es die aktuelle rows-Liste
+  // verwendet. Mit useCallback([rows, ...]) bleibt die Referenz stabil und
+  // Virtuoso rendert Zeilen mit dem alten Snapshot (leere Zellen bis zum
+  // ersten Klick).
+  const TableRowComponent = (
+    props: React.DetailedHTMLProps<React.HTMLAttributes<HTMLTableRowElement>, HTMLTableRowElement>
+  ) => {
+    // eslint-disable-next-line react/prop-types
+    const index = props['data-index'] as number
+    const row = rows[index] as Tanstack.Row<T>
 
-      return (
-        <TableRow
-          {...props}
-          sx={[
-            row.getIsSelected() && {
-              background: theme.palette.secondary.main
-            },
-            {
-              '&:hover': {
-                boxShadow: 'inset 0 0 0 10em rgba(0, 0, 0, 0.1)'
-              }
+    return (
+      <TableRow
+        {...props}
+        sx={[
+          row.getIsSelected() && {
+            background: theme.palette.secondary.main
+          },
+          {
+            '&:hover': {
+              boxShadow: 'inset 0 0 0 10em rgba(0, 0, 0, 0.1)'
             }
-          ]}
-          onClick={() => row.toggleSelected()}
-        >
-          {row.getVisibleCells().map((cell) => (
-            <TableCell key={cell.id} style={{ padding: '6px' }}>
-              {Tanstack.flexRender(cell.column.columnDef.cell, cell.getContext())}
-            </TableCell>
-          ))}
-        </TableRow>
-      )
-    },
-    [rows, theme.palette.secondary.main]
-  )
+          }
+        ]}
+        onClick={() => row.toggleSelected()}
+      >
+        {row.getVisibleCells().map((cell) => (
+          <TableCell key={cell.id} style={{ padding: '6px' }}>
+            {Tanstack.flexRender(cell.column.columnDef.cell, cell.getContext())}
+          </TableCell>
+        ))}
+      </TableRow>
+    )
+  }
 
   if (loading) {
     return (
