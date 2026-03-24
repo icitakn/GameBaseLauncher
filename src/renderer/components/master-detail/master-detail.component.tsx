@@ -44,15 +44,7 @@ export interface EditFormProps<T> {
 export interface MasterDetailProps<T> {
   title: string
   tableName: EntityType
-  /**
-   * Standardmäßig angezeigte Spalten (z. B. nur id + name).
-   * Wird nur als Fallback verwendet, wenn keine gespeicherte Auswahl existiert.
-   */
   columns: any[]
-  /**
-   * Alle verfügbaren Spalten inkl. Label für den Picker-Dialog.
-   * Fehlt dieses Prop, wird kein „Spalten"-Button angezeigt.
-   */
   availableColumns?: ColumnOption<T>[]
   DetailsPanel?: React.ComponentType<{
     selected?: T | null
@@ -64,7 +56,6 @@ export interface MasterDetailProps<T> {
   loadData: (gamebaseId: UUID, fields?: string[]) => Promise<void>
 }
 
-/** Liest aktive Spalten-Keys aus localStorage, Fallback: Standardspalten */
 function getStoredColumnKeys(storageKey: string, defaultKeys: string[]): string[] {
   try {
     const stored = localStorage.getItem(storageKey)
@@ -97,10 +88,8 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
   const [isSaving, setIsSaving] = useState(false)
   const [isColumnPickerOpen, setColumnPickerOpen] = useState(false)
 
-  // localStorage-Schlüssel pro Tabelle, damit jede Entität ihre eigene Auswahl hat
   const storageKey = `column-selection-${tableName}`
 
-  // Standardmäßig aktive Keys = Keys aus dem columns-Prop
   const defaultActiveKeys = useMemo<string[]>(
     () =>
       columns.map((col) => {
@@ -114,27 +103,18 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
     availableColumns ? getStoredColumnKeys(storageKey, defaultActiveKeys) : defaultActiveKeys
   )
 
-  // ── KERN-FIX 1 ────────────────────────────────────────────────────────────
-  // tableColumns muss via useMemo auf activeColumnKeys reagieren.
-  // Ohne useMemo wird das Array bei jedem Render neu erzeugt – TanStack Table
-  // erhält zwar ein neues Array-Objekt, aber intern gleiche Column-Referenzen,
-  // und baut die Tabelle nicht neu auf.
   const tableColumns = useMemo(() => {
     if (!availableColumns) return columns
     return availableColumns.filter((c) => activeColumnKeys.includes(c.key)).map((c) => c.column)
   }, [availableColumns, activeColumnKeys, columns])
-  // ──────────────────────────────────────────────────────────────────────────
 
   const formRef = useRef<FormHandle>(null)
 
-  // Neu laden wenn Gamebase wechselt ODER wenn sich die aktiven Spalten ändern,
-  // damit das Backend genau die benötigten Felder (inkl. FK-Populates) lädt.
   useEffect(() => {
     if (!selectedGamebase) return
     setLoading(true)
     loadData(selectedGamebase.id, activeColumnKeys).finally(() => setLoading(false))
   }, [selectedGamebase, activeColumnKeys])
-  // ──────────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     setEditDialogOpen(edit != null)

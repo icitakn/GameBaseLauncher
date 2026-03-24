@@ -1,20 +1,46 @@
-import { createColumnHelper } from '@tanstack/react-table'
+import { createColumnHelper, ColumnDef } from '@tanstack/react-table'
 import { MasterDetail } from '../components/master-detail/master-detail.component'
 import { GamePanel } from '../components/detail-panels/game-panel/game-panel'
 import { GameForm } from '../components/forms/game-form'
 import useEntityStore from '../hooks/useEntityStore'
 import { useMemo } from 'react'
-import { GameDTO } from '@shared/models/form-schemes.model'
+import { GameDTO, Genre } from '@shared/models/form-schemes.model'
 import { useTranslation } from 'react-i18next'
 import { ColumnOption } from '../components/column-picker/column-picker-dialog'
 
 const columnHelper = createColumnHelper<GameDTO>()
 
-/** Hilfsfunktion: gibt den Anzeigenamen eines relationalen Felds zurück */
 const nameOf = (val: unknown): string => {
   if (!val) return ''
   return typeof val === 'object' && 'name' in val ? (val as { name: string }).name : String(val)
 }
+
+const getFullGenreLabel = (genre: Genre): string => {
+  if (!genre.parent) {
+    return genre.name ?? ''
+  }
+  const parentLabel = getFullGenreLabel(genre.parent)
+  return parentLabel + ' - ' + genre.name
+}
+
+const relationColumn = (key: keyof GameDTO, label: string): ColumnDef<GameDTO, any> => {
+  return columnHelper.accessor((row) => nameOf(row[key]), {
+    id: String(key),
+    header: label,
+    enableColumnFilter: true,
+    filterFn: 'includesString',
+    cell: (info) => info.getValue()
+  })
+}
+
+const numberColumn = (key: keyof GameDTO, label: string) =>
+  columnHelper.accessor((row) => row[key]?.toString() ?? '', {
+    id: String(key),
+    header: label,
+    enableColumnFilter: true,
+    filterFn: 'includesString',
+    cell: (info) => info.getValue()
+  })
 
 const buildGameColumns = (t: (key: string) => string): ColumnOption<GameDTO>[] => [
   {
@@ -47,89 +73,58 @@ const buildGameColumns = (t: (key: string) => string): ColumnOption<GameDTO>[] =
   {
     key: 'genre',
     label: t('translation:game.genre'),
-    column: columnHelper.accessor('genre', {
+    column: columnHelper.accessor((row) => row?.genre && getFullGenreLabel(row.genre), {
+      id: 'genre',
       header: t('translation:game.genre'),
       enableColumnFilter: true,
-      cell: (info) => nameOf(info.getValue())
+      filterFn: 'includesString',
+      cell: (info) => info.getValue()
     })
   },
   {
     key: 'publisher',
     label: t('translation:game.publisher'),
-    column: columnHelper.accessor('publisher', {
-      header: t('translation:game.publisher'),
-      enableColumnFilter: true,
-      cell: (info) => nameOf(info.getValue())
-    })
+    column: relationColumn('publisher', t('translation:game.publisher'))
   },
   {
     key: 'developer',
     label: t('translation:game.developer'),
-    column: columnHelper.accessor('developer', {
-      header: t('translation:game.developer'),
-      enableColumnFilter: true,
-      cell: (info) => nameOf(info.getValue())
-    })
+    column: relationColumn('developer', t('translation:game.developer'))
   },
   {
     key: 'programmer',
     label: t('translation:game.programmer'),
-    column: columnHelper.accessor('programmer', {
-      header: t('translation:game.programmer'),
-      enableColumnFilter: true,
-      cell: (info) => nameOf(info.getValue())
-    })
+    column: relationColumn('programmer', t('translation:game.programmer'))
   },
   {
     key: 'musician',
     label: t('translation:game.musician'),
-    column: columnHelper.accessor('musician', {
-      header: t('translation:game.musician'),
-      enableColumnFilter: true,
-      cell: (info) => nameOf(info.getValue())
-    })
+    column: relationColumn('musician', t('translation:game.musician'))
   },
   {
     key: 'artist',
     label: t('translation:game.artist'),
-    column: columnHelper.accessor('artist', {
-      header: t('translation:game.artist'),
-      enableColumnFilter: true,
-      cell: (info) => nameOf(info.getValue())
-    })
+    column: relationColumn('artist', t('translation:game.artist'))
   },
   {
     key: 'language',
     label: t('translation:game.language'),
-    column: columnHelper.accessor('language', {
-      header: t('translation:game.language'),
-      enableColumnFilter: true,
-      cell: (info) => nameOf(info.getValue())
-    })
+    column: relationColumn('language', t('translation:game.language'))
   },
   {
     key: 'difficulty',
     label: t('translation:game.difficulty'),
-    column: columnHelper.accessor('difficulty', {
-      header: t('translation:game.difficulty'),
-      cell: (info) => nameOf(info.getValue())
-    })
+    column: relationColumn('difficulty', t('translation:game.difficulty'))
   },
   {
     key: 'rarity',
     label: t('translation:game.rarity'),
-    column: columnHelper.accessor('rarity', {
-      header: t('translation:game.rarity'),
-      cell: (info) => nameOf(info.getValue())
-    })
+    column: relationColumn('rarity', t('translation:game.rarity'))
   },
   {
     key: 'license',
     label: t('translation:game.license'),
-    column: columnHelper.accessor('license', {
-      header: t('translation:game.license'),
-      cell: (info) => nameOf(info.getValue())
-    })
+    column: relationColumn('license', t('translation:game.license'))
   },
   {
     key: 'rating',
@@ -160,18 +155,12 @@ const buildGameColumns = (t: (key: string) => string): ColumnOption<GameDTO>[] =
   {
     key: 'playersFrom',
     label: t('translation:game.player_number_min'),
-    column: columnHelper.accessor('playersFrom', {
-      header: t('translation:game.player_number_min'),
-      cell: (info) => info.getValue() ?? ''
-    })
+    column: numberColumn('playersFrom', t('translation:game.player_number_min'))
   },
   {
     key: 'playersTo',
     label: t('translation:game.player_number_max'),
-    column: columnHelper.accessor('playersTo', {
-      header: t('translation:game.player_number_max'),
-      cell: (info) => info.getValue() ?? ''
-    })
+    column: numberColumn('playersTo', t('translation:game.player_number_max'))
   },
   {
     key: 'length',
@@ -231,7 +220,6 @@ const buildGameColumns = (t: (key: string) => string): ColumnOption<GameDTO>[] =
   }
 ]
 
-/** Standardmäßig angezeigte Spalten beim ersten Start */
 const DEFAULT_COLUMN_KEYS = ['id', 'name']
 
 export default function Games() {
