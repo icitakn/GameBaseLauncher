@@ -26,11 +26,7 @@ import FormCheckbox from './components/form-checkbox'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faFile } from '@fortawesome/free-solid-svg-icons'
 import { useFileDialog } from '@renderer/hooks/useFileDialog'
-import { SEPARATOR, UNDEFINED_YEARS } from '@shared/consts'
-
-const YEARS = Array(130)
-  .fill(0)
-  .map((_, index) => index + 1970)
+import { ALL_YEARS, SEPARATOR, UNDEFINED_YEARS } from '@shared/consts'
 
 const CONTROLS: IdLabelObject[] = [
   { id: 0, label: 'Joystick Port 2' },
@@ -63,13 +59,13 @@ const toRefObject = (entity: { id?: number | null; name?: string | null } | null
 }
 
 export const GameForm = forwardRef<FormHandle, EditFormProps<GameDTO>>(({ selected }, ref) => {
-  const [years, setYears] = useState([
-    ...UNDEFINED_YEARS,
-    ...YEARS.map((year) => ({
-      id: year,
-      label: year.toString()
-    }))
-  ])
+  // const [years, setYears] = useState([
+  //   ...UNDEFINED_YEARS,
+  //   ...YEARS.map((year) => ({
+  //     id: year,
+  //     label: year.toString()
+  //   }))
+  // ])
 
   const RATING: IdLabelObject[] = [
     { id: 0, label: t('translation:forms.game.fields.ratings.unknown') },
@@ -428,7 +424,7 @@ export const GameForm = forwardRef<FormHandle, EditFormProps<GameDTO>>(({ select
                   name="year"
                   control={control}
                   label={t('translation:game.year')}
-                  options={years}
+                  options={ALL_YEARS}
                 />
 
                 <FormAutocomplete

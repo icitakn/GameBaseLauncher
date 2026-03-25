@@ -7,6 +7,7 @@ import { useMemo } from 'react'
 import { GameDTO, Genre } from '@shared/models/form-schemes.model'
 import { useTranslation } from 'react-i18next'
 import { ColumnOption } from '../components/column-picker/column-picker-dialog'
+import { ALL_YEARS, UNDEFINED_YEARS_MAP } from '@shared/consts'
 
 const columnHelper = createColumnHelper<GameDTO>()
 
@@ -64,11 +65,19 @@ const buildGameColumns = (t: (key: string) => string): ColumnOption<GameDTO>[] =
   {
     key: 'year',
     label: t('translation:game.year'),
-    column: columnHelper.accessor('year', {
-      header: t('translation:game.year'),
-      enableSorting: true,
-      cell: (info) => info.getValue() ?? ''
-    })
+    column: columnHelper.accessor(
+      (row) => {
+        const val = row.year
+        return val && UNDEFINED_YEARS_MAP[val] ? UNDEFINED_YEARS_MAP[val] : (val?.toString() ?? '')
+      },
+      {
+        id: 'year',
+        header: t('translation:game.year'),
+        enableColumnFilter: true,
+        filterFn: 'includesString',
+        cell: (info) => info.getValue()
+      }
+    )
   },
   {
     key: 'genre',
