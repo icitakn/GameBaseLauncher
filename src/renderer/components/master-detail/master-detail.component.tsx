@@ -23,6 +23,7 @@ import useEntityStore from '@renderer/hooks/useEntityStore'
 import { ColumnPickerDialog, ColumnOption } from '../column-picker/column-picker-dialog'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTableColumns } from '@fortawesome/free-solid-svg-icons'
+import { useColumnSelection } from '@renderer/hooks/useColumnSelection'
 
 export interface DetailsProps<T> {
   selected: T
@@ -56,19 +57,6 @@ export interface MasterDetailProps<T> {
   loadData: (gamebaseId: UUID, fields?: string[]) => Promise<void>
 }
 
-function getStoredColumnKeys(storageKey: string, defaultKeys: string[]): string[] {
-  try {
-    const stored = localStorage.getItem(storageKey)
-    if (stored) {
-      const parsed = JSON.parse(stored) as string[]
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed
-    }
-  } catch {
-    // ignore
-  }
-  return defaultKeys
-}
-
 export function MasterDetail<T extends { id?: number | null; name?: string }>({
   title,
   tableName,
@@ -88,8 +76,7 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
   const [isSaving, setIsSaving] = useState(false)
   const [isColumnPickerOpen, setColumnPickerOpen] = useState(false)
 
-  const storageKey = `column-selection-${tableName}`
-
+  // Standardmäßig aktive Keys = Keys aus dem columns-Prop
   const defaultActiveKeys = useMemo<string[]>(
     () =>
       columns.map((col) => {
@@ -99,9 +86,17 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
     [columns]
   )
 
+  // Spaltenauswahl aus der GameBase-Config lesen/schreiben
+  const { getColumnKeys, saveColumnKeys } = useColumnSelection(tableName)
   const [activeColumnKeys, setActiveColumnKeys] = useState<string[]>(() =>
-    availableColumns ? getStoredColumnKeys(storageKey, defaultActiveKeys) : defaultActiveKeys
+    availableColumns ? getColumnKeys(defaultActiveKeys) : defaultActiveKeys
   )
+
+  // Spalten neu initialisieren wenn Gamebase wechselt (andere GB hat andere Auswahl)
+  useEffect(() => {
+    if (!availableColumns) return
+    setActiveColumnKeys(getColumnKeys(defaultActiveKeys))
+  }, [selectedGamebase?.id])
 
   const tableColumns = useMemo(() => {
     if (!availableColumns) return columns
@@ -112,17 +107,27 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
 
   useEffect(() => {
     if (!selectedGamebase) return
-    setLoading(true)
-    loadData(selectedGamebase.id, activeColumnKeys).finally(() => setLoading(false))
+
+    // Nur laden wenn:
+    // a) Noch keine Daten im Store, oder
+    // b) Ein angefordertes Feld fehlt in den vorhandenen Objekten
+    //    (d.h. die Slim-Abfrage hatte es nicht dabei)
+    const needsLoad = !data || data.length === 0 || fieldsMissingInData(data, activeColumnKeys)
+
+    if (needsLoad) {
+      setLoading(true)
+      loadData(selectedGamebase.id, activeColumnKeys).finally(() => setLoading(false))
+    }
   }, [selectedGamebase, activeColumnKeys])
 
   useEffect(() => {
     setEditDialogOpen(edit != null)
   }, [edit])
 
-  const handleColumnChange = (keys: string[]) => {
+  const handleColumnChange = async (keys: string[]) => {
     setActiveColumnKeys(keys)
-    localStorage.setItem(storageKey, JSON.stringify(keys))
+    await saveColumnKeys(keys)
+    // Laden wird durch den useEffect oben ausgelöst (activeColumnKeys ändert sich)
   }
 
   const handleSave = async () => {
@@ -278,4 +283,12 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
       )}
     </Stack>
   )
+}
+
+function fieldsMissingInData<T extends object>(data: T[], requestedKeys: string[]): boolean {
+  if (data.length === 0) return true
+  const sample = data[0]
+  return requestedKeys
+    .filter((k) => k !== 'id' && k !== 'name')
+    .some((key) => !(key in sample) || (sample as any)[key] === undefined)
 }
