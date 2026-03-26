@@ -7,7 +7,7 @@ import { useMemo } from 'react'
 import { GameDTO, Genre } from '@shared/models/form-schemes.model'
 import { useTranslation } from 'react-i18next'
 import { ColumnOption } from '../components/column-picker/column-picker-dialog'
-import { ALL_YEARS, UNDEFINED_YEARS_MAP } from '@shared/consts'
+import { UNDEFINED_YEARS_MAP } from '@shared/consts'
 
 const columnHelper = createColumnHelper<GameDTO>()
 
@@ -28,6 +28,7 @@ const relationColumn = (key: keyof GameDTO, label: string): ColumnDef<GameDTO, a
   return columnHelper.accessor((row) => nameOf(row[key]), {
     id: String(key),
     header: label,
+    size: 150,
     enableColumnFilter: true,
     filterFn: 'includesString',
     cell: (info) => info.getValue()
@@ -38,6 +39,7 @@ const numberColumn = (key: keyof GameDTO, label: string) =>
   columnHelper.accessor((row) => row[key]?.toString() ?? '', {
     id: String(key),
     header: label,
+    size: 150,
     enableColumnFilter: true,
     filterFn: 'includesString',
     cell: (info) => info.getValue()
@@ -49,6 +51,7 @@ const buildGameColumns = (t: (key: string) => string): ColumnOption<GameDTO>[] =
     label: t('translation:forms.fields.id'),
     column: columnHelper.accessor('id', {
       header: t('translation:forms.fields.id'),
+      size: 80,
       enableColumnFilter: true,
       filterFn: 'includesString',
       cell: (info) => info.getValue()?.toString()

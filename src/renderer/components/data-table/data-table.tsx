@@ -1,4 +1,4 @@
-import { Box, CircularProgress, Stack, TableCell, TableRow, useTheme } from '@mui/material'
+import { Box, CircularProgress, Stack, TableCell, TableRow, Tooltip, useTheme } from '@mui/material'
 import React, {
   useEffect,
   useMemo,
@@ -37,7 +37,11 @@ const TableHeader = <T,>({
   >
     {headerGroup.headers.map((header: Tanstack.Header<T, unknown>) => {
       return (
-        <TableCell key={header.id} colSpan={header.colSpan}>
+        <TableCell
+          key={header.id}
+          colSpan={header.colSpan}
+          style={{ width: header.getSize(), minWidth: header.getSize() }}
+        >
           <Stack direction="column">
             <Stack
               sx={{
@@ -140,11 +144,6 @@ export default function DataTable<T>({
     }
   }, [rowSelection, rows, onSelectionChange])
 
-  // fixedHeaderContent darf KEIN useCallback mit stabiler Referenz sein –
-  // react-virtuoso cached components und ruft fixedHeaderContent nur neu auf,
-  // wenn es eine neue Funktionsreferenz bekommt. Direkte Definition ohne
-  // Memoization sorgt dafür, dass Header bei jeder Spaltenänderung neu
-  // gerendert werden.
   const fixedHeaderContent = (): ReactNode => {
     if (noHeader) return null
     return table
@@ -160,9 +159,10 @@ export default function DataTable<T>({
             {...props}
             style={{
               ...style,
-              width: '100%',
+              width: 'max-content',
+              minWidth: '100%',
               tableLayout: 'fixed',
-              borderCollapse: 'collapse',
+              borderCollapse: 'separate',
               borderSpacing: 0
             }}
           />
@@ -171,11 +171,6 @@ export default function DataTable<T>({
     []
   ) as ComponentType<TableProps & ContextProp<unknown>>
 
-  // TableRowComponent ebenfalls ohne useCallback – Virtuoso muss bei jedem
-  // Render eine neue Referenz sehen, damit es die aktuelle rows-Liste
-  // verwendet. Mit useCallback([rows, ...]) bleibt die Referenz stabil und
-  // Virtuoso rendert Zeilen mit dem alten Snapshot (leere Zellen bis zum
-  // ersten Klick).
   const TableRowComponent = (
     props: React.DetailedHTMLProps<React.HTMLAttributes<HTMLTableRowElement>, HTMLTableRowElement>
   ) => {
@@ -198,11 +193,27 @@ export default function DataTable<T>({
         ]}
         onClick={() => row.toggleSelected()}
       >
-        {row.getVisibleCells().map((cell) => (
-          <TableCell key={cell.id} style={{ padding: '6px' }}>
-            {Tanstack.flexRender(cell.column.columnDef.cell, cell.getContext())}
-          </TableCell>
-        ))}
+        {row.getVisibleCells().map((cell) => {
+          const value = cell.getValue()?.toString() || ''
+          return (
+            <TableCell
+              key={cell.id}
+              style={{
+                padding: '6px',
+                width: cell.column.getSize(),
+                minWidth: cell.column.getSize(),
+                maxWidth: cell.column.getSize(),
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              <Tooltip title={value} disableInteractive enterDelay={500} placement="top-start">
+                <span>{Tanstack.flexRender(cell.column.columnDef.cell, cell.getContext())}</span>
+              </Tooltip>
+            </TableCell>
+          )
+        })}
       </TableRow>
     )
   }

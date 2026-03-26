@@ -76,7 +76,6 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
   const [isSaving, setIsSaving] = useState(false)
   const [isColumnPickerOpen, setColumnPickerOpen] = useState(false)
 
-  // Standardmäßig aktive Keys = Keys aus dem columns-Prop
   const defaultActiveKeys = useMemo<string[]>(
     () =>
       columns.map((col) => {
@@ -86,13 +85,11 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
     [columns]
   )
 
-  // Spaltenauswahl aus der GameBase-Config lesen/schreiben
   const { getColumnKeys, saveColumnKeys } = useColumnSelection(tableName)
   const [activeColumnKeys, setActiveColumnKeys] = useState<string[]>(() =>
     availableColumns ? getColumnKeys(defaultActiveKeys) : defaultActiveKeys
   )
 
-  // Spalten neu initialisieren wenn Gamebase wechselt (andere GB hat andere Auswahl)
   useEffect(() => {
     if (!availableColumns) return
     setActiveColumnKeys(getColumnKeys(defaultActiveKeys))
@@ -108,10 +105,6 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
   useEffect(() => {
     if (!selectedGamebase) return
 
-    // Nur laden wenn:
-    // a) Noch keine Daten im Store, oder
-    // b) Ein angefordertes Feld fehlt in den vorhandenen Objekten
-    //    (d.h. die Slim-Abfrage hatte es nicht dabei)
     const needsLoad = !data || data.length === 0 || fieldsMissingInData(data, activeColumnKeys)
 
     if (needsLoad) {
@@ -127,7 +120,6 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
   const handleColumnChange = async (keys: string[]) => {
     setActiveColumnKeys(keys)
     await saveColumnKeys(keys)
-    // Laden wird durch den useEffect oben ausgelöst (activeColumnKeys ändert sich)
   }
 
   const handleSave = async () => {
