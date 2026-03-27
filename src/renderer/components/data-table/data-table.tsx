@@ -171,34 +171,23 @@ export default function DataTable<T>({
     []
   ) as ComponentType<TableProps & ContextProp<unknown>>
 
-  const TableRowComponent = (
-    props: React.DetailedHTMLProps<React.HTMLAttributes<HTMLTableRowElement>, HTMLTableRowElement>
-  ) => {
-    // eslint-disable-next-line react/prop-types
-    const index = props['data-index'] as number
-    const row = rows[index] as Tanstack.Row<T>
-
-    return (
-      <TableRow
-        {...props}
-        sx={[
-          row.getIsSelected() && {
-            background: theme.palette.secondary.main
-          },
-          {
-            '&:hover': {
-              boxShadow: 'inset 0 0 0 10em rgba(0, 0, 0, 0.1)'
-            }
-          }
-        ]}
-        onClick={() => row.toggleSelected()}
-      >
-        {row.getVisibleCells().map((cell) => {
-          return (
+  const TableRowComponent = React.memo(
+    ({ index, row, theme, ...props }: { index: number; row: any; theme: any } & any) => {
+      return (
+        <TableRow
+          {...props}
+          sx={[
+            row.getIsSelected() && { background: theme.palette.secondary.main },
+            { '&:hover': { boxShadow: 'inset 0 0 0 10em rgba(0, 0, 0, 0.1)' } }
+          ]}
+          onClick={() => row.toggleSelected()}
+        >
+          {row.getVisibleCells().map((cell: any) => (
             <TableCell
               key={cell.id}
+              title={cell.getValue()?.toString()} // Natives Tooltip statt MUI Tooltip (Performance!)
               style={{
-                padding: '6px',
+                padding: '4px 6px',
                 width: cell.column.getSize(),
                 minWidth: cell.column.getSize(),
                 maxWidth: cell.column.getSize(),
@@ -209,11 +198,22 @@ export default function DataTable<T>({
             >
               {Tanstack.flexRender(cell.column.columnDef.cell, cell.getContext())}
             </TableCell>
-          )
-        })}
-      </TableRow>
-    )
-  }
+          ))}
+        </TableRow>
+      )
+    }
+  )
+
+  const components = useMemo(
+    () => ({
+      Table: TableComponent,
+      TableRow: (props: any) => {
+        const index = props['data-index']
+        return <TableRowComponent index={index} row={rows[index]} theme={theme} {...props} />
+      }
+    }),
+    [rows, theme]
+  )
 
   if (loading) {
     return (
@@ -240,10 +240,7 @@ export default function DataTable<T>({
         }}
         totalCount={rows.length}
         data={rows}
-        components={{
-          Table: TableComponent,
-          TableRow: TableRowComponent
-        }}
+        components={components}
         fixedHeaderContent={fixedHeaderContent}
       />
     </Box>
