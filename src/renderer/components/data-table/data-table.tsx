@@ -194,7 +194,6 @@ export default function DataTable<T>({
         onClick={() => row.toggleSelected()}
       >
         {row.getVisibleCells().map((cell) => {
-          const value = cell.getValue()?.toString() || ''
           return (
             <TableCell
               key={cell.id}
