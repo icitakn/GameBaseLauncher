@@ -104,14 +104,9 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
 
   useEffect(() => {
     if (!selectedGamebase) return
-
-    const needsLoad = !data || data.length === 0 || fieldsMissingInData(data, activeColumnKeys)
-
-    if (needsLoad) {
-      setLoading(true)
-      loadData(selectedGamebase.id, activeColumnKeys).finally(() => setLoading(false))
-    }
-  }, [selectedGamebase, activeColumnKeys])
+    setLoading(true)
+    loadData(selectedGamebase.id, activeColumnKeys).finally(() => setLoading(false))
+  }, [selectedGamebase?.id, activeColumnKeys])
 
   useEffect(() => {
     setEditDialogOpen(edit != null)
@@ -167,7 +162,6 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
       spacing={2}
       sx={{ padding: '10px', height: '100%', width: '100%', overflow: 'hidden' }}
     >
-      {/* Edit-Dialog */}
       <Dialog open={isEditDialogOpen} fullWidth maxWidth="md">
         <DialogTitle>{edit?.id ? 'Edit' : 'New'}</DialogTitle>
         <DialogContent>
@@ -183,7 +177,6 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
         </DialogActions>
       </Dialog>
 
-      {/* Spalten-Picker-Dialog */}
       {availableColumns && (
         <ColumnPickerDialog<T>
           open={isColumnPickerOpen}
@@ -275,12 +268,4 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
       )}
     </Stack>
   )
-}
-
-function fieldsMissingInData<T extends object>(data: T[], requestedKeys: string[]): boolean {
-  if (data.length === 0) return true
-  const sample = data[0]
-  return requestedKeys
-    .filter((k) => k !== 'id' && k !== 'name')
-    .some((key) => !(key in sample) || (sample as any)[key] === undefined)
 }

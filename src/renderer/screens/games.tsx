@@ -8,6 +8,7 @@ import { GameDTO, Genre } from '@shared/models/form-schemes.model'
 import { useTranslation } from 'react-i18next'
 import { ColumnOption } from '../components/column-picker/column-picker-dialog'
 import { UNDEFINED_YEARS_MAP } from '@shared/consts'
+import { genreAccessor, nameOfAccessors, yearAccessor } from '@renderer/lib/column-accessors'
 
 const columnHelper = createColumnHelper<GameDTO>()
 
@@ -25,7 +26,7 @@ const getFullGenreLabel = (genre: Genre): string => {
 }
 
 const relationColumn = (key: keyof GameDTO, label: string): ColumnDef<GameDTO, any> => {
-  return columnHelper.accessor((row) => nameOf(row[key]), {
+  return columnHelper.accessor(nameOfAccessors[key]!, {
     id: String(key),
     header: label,
     size: 150,
@@ -68,24 +69,18 @@ const buildGameColumns = (t: (key: string) => string): ColumnOption<GameDTO>[] =
   {
     key: 'year',
     label: t('translation:game.year'),
-    column: columnHelper.accessor(
-      (row) => {
-        const val = row.year
-        return val && UNDEFINED_YEARS_MAP[val] ? UNDEFINED_YEARS_MAP[val] : (val?.toString() ?? '')
-      },
-      {
-        id: 'year',
-        header: t('translation:game.year'),
-        enableColumnFilter: true,
-        filterFn: 'includesString',
-        cell: (info) => info.getValue()
-      }
-    )
+    column: columnHelper.accessor(yearAccessor, {
+      id: 'year',
+      header: t('translation:game.year'),
+      enableColumnFilter: true,
+      filterFn: 'includesString',
+      cell: (info) => info.getValue()
+    })
   },
   {
     key: 'genre',
     label: t('translation:game.genre'),
-    column: columnHelper.accessor((row) => row?.genre && getFullGenreLabel(row.genre), {
+    column: columnHelper.accessor(genreAccessor, {
       id: 'genre',
       header: t('translation:game.genre'),
       enableColumnFilter: true,

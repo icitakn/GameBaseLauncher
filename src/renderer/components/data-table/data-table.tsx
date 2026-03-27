@@ -208,9 +208,7 @@ export default function DataTable<T>({
                 whiteSpace: 'nowrap'
               }}
             >
-              <Tooltip title={value} disableInteractive enterDelay={500} placement="top-start">
-                <span>{Tanstack.flexRender(cell.column.columnDef.cell, cell.getContext())}</span>
-              </Tooltip>
+              {Tanstack.flexRender(cell.column.columnDef.cell, cell.getContext())}
             </TableCell>
           )
         })}
