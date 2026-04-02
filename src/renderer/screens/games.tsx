@@ -1,97 +1,322 @@
-import { createColumnHelper } from '@tanstack/react-table'
+import { createColumnHelper, ColumnDef } from '@tanstack/react-table'
 import { MasterDetail } from '../components/master-detail/master-detail.component'
 import { GamePanel } from '../components/detail-panels/game-panel/game-panel'
 import { GameForm } from '../components/forms/game-form'
 import useEntityStore from '../hooks/useEntityStore'
 import { useMemo } from 'react'
-import { GameDTO } from '@shared/models/form-schemes.model'
-import { t } from 'i18next'
+import { GameDTO, Genre } from '@shared/models/form-schemes.model'
+import { useTranslation } from 'react-i18next'
+import { ColumnOption } from '../components/column-picker/column-picker-dialog'
+import { genreAccessor, nameOfAccessors, yearAccessor } from '@renderer/lib/column-accessors'
+import { useColumnSelection } from '@renderer/hooks/useColumnSelection'
+import { useSelectedGamebase } from '@renderer/hooks/useGamebase'
 
 const columnHelper = createColumnHelper<GameDTO>()
 
+const getFullGenreLabel = (genre: Genre): string => {
+  if (!genre.parent) {
+    return genre.name ?? ''
+  }
+  const parentLabel = getFullGenreLabel(genre.parent)
+  return parentLabel + ' - ' + genre.name
+}
+
+const relationColumn = (key: keyof GameDTO, label: string): ColumnDef<GameDTO, any> => {
+  return columnHelper.accessor(nameOfAccessors[key]!, {
+    id: String(key),
+    header: label,
+    size: 150,
+    enableColumnFilter: true,
+    filterFn: 'includesString',
+    cell: (info) => info.getValue()
+  })
+}
+
+const numberColumn = (key: keyof GameDTO, label: string) =>
+  columnHelper.accessor((row) => row[key]?.toString() ?? '', {
+    id: String(key),
+    header: label,
+    size: 150,
+    enableColumnFilter: true,
+    filterFn: 'includesString',
+    cell: (info) => info.getValue()
+  })
+
+const buildGameColumns = (t: (key: string) => string): ColumnOption<GameDTO>[] => [
+  {
+    key: 'id',
+    label: t('translation:forms.fields.id'),
+    column: columnHelper.accessor('id', {
+      header: t('translation:forms.fields.id'),
+      size: 80,
+      enableColumnFilter: true,
+      filterFn: 'includesString',
+      cell: (info) => info.getValue()?.toString()
+    })
+  },
+  {
+    key: 'name',
+    label: t('translation:forms.fields.name'),
+    column: columnHelper.accessor('name', {
+      header: t('translation:forms.fields.name'),
+      enableColumnFilter: true
+    })
+  },
+  {
+    key: 'year',
+    label: t('translation:game.year'),
+    column: columnHelper.accessor(yearAccessor, {
+      id: 'year',
+      header: t('translation:game.year'),
+      enableColumnFilter: true,
+      filterFn: 'includesString',
+      cell: (info) => info.getValue()
+    })
+  },
+  {
+    key: 'genre',
+    label: t('translation:game.genre'),
+    column: columnHelper.accessor(genreAccessor, {
+      id: 'genre',
+      header: t('translation:game.genre'),
+      enableColumnFilter: true,
+      filterFn: 'includesString',
+      cell: (info) => info.getValue()
+    })
+  },
+  {
+    key: 'publisher',
+    label: t('translation:game.publisher'),
+    column: relationColumn('publisher', t('translation:game.publisher'))
+  },
+  {
+    key: 'developer',
+    label: t('translation:game.developer'),
+    column: relationColumn('developer', t('translation:game.developer'))
+  },
+  {
+    key: 'programmer',
+    label: t('translation:game.programmer'),
+    column: relationColumn('programmer', t('translation:game.programmer'))
+  },
+  {
+    key: 'musician',
+    label: t('translation:game.musician'),
+    column: relationColumn('musician', t('translation:game.musician'))
+  },
+  {
+    key: 'artist',
+    label: t('translation:game.artist'),
+    column: relationColumn('artist', t('translation:game.artist'))
+  },
+  {
+    key: 'language',
+    label: t('translation:game.language'),
+    column: relationColumn('language', t('translation:game.language'))
+  },
+  {
+    key: 'difficulty',
+    label: t('translation:game.difficulty'),
+    column: relationColumn('difficulty', t('translation:game.difficulty'))
+  },
+  {
+    key: 'rarity',
+    label: t('translation:game.rarity'),
+    column: relationColumn('rarity', t('translation:game.rarity'))
+  },
+  {
+    key: 'license',
+    label: t('translation:game.license'),
+    column: relationColumn('license', t('translation:game.license'))
+  },
+  {
+    key: 'rating',
+    label: t('translation:game.rating'),
+    column: columnHelper.accessor('rating', {
+      header: t('translation:game.rating'),
+      enableSorting: true,
+      cell: (info) => info.getValue() ?? ''
+    })
+  },
+  {
+    key: 'reviewRating',
+    label: t('translation:game.review_rating'),
+    column: columnHelper.accessor('reviewRating', {
+      header: t('translation:game.review_rating'),
+      enableSorting: true,
+      cell: (info) => info.getValue() ?? ''
+    })
+  },
+  {
+    key: 'classic',
+    label: t('translation:forms.game.fields.ratings.classic'),
+    column: columnHelper.accessor('classic', {
+      header: t('translation:forms.game.fields.ratings.classic'),
+      cell: (info) => (info.getValue() ? '★' : '')
+    })
+  },
+  {
+    key: 'playersFrom',
+    label: t('translation:game.player_number_min'),
+    column: numberColumn('playersFrom', t('translation:game.player_number_min'))
+  },
+  {
+    key: 'playersTo',
+    label: t('translation:game.player_number_max'),
+    column: numberColumn('playersTo', t('translation:game.player_number_max'))
+  },
+  {
+    key: 'length',
+    label: t('translation:game.game_length'),
+    column: columnHelper.accessor('length', {
+      header: t('translation:game.game_length'),
+      cell: (info) => info.getValue() ?? ''
+    })
+  },
+  {
+    key: 'palNtsc',
+    label: 'PAL/NTSC',
+    column: columnHelper.accessor('palNtsc', {
+      header: 'PAL/NTSC',
+      cell: (info) => info.getValue() ?? ''
+    })
+  },
+  {
+    key: 'fav',
+    label: t('translation:game.favorite'),
+    column: columnHelper.accessor('fav', {
+      header: t('translation:game.favorite'),
+      cell: (info) => (info.getValue() ? '♥' : '')
+    })
+  },
+  {
+    key: 'adult',
+    label: t('translation:game.adult'),
+    column: columnHelper.accessor('adult', {
+      header: t('translation:game.adult'),
+      cell: (info) => (info.getValue() ? '✓' : '')
+    })
+  },
+  {
+    key: 'playable',
+    label: t('translation:game.playable'),
+    column: columnHelper.accessor('playable', {
+      header: t('translation:game.playable'),
+      cell: (info) => (info.getValue() ? '✓' : '')
+    })
+  },
+  {
+    key: 'original',
+    label: t('translation:game.original'),
+    column: columnHelper.accessor('original', {
+      header: t('translation:game.original'),
+      cell: (info) => (info.getValue() ? '✓' : '')
+    })
+  },
+  {
+    key: 'filename',
+    label: t('translation:game.filename'),
+    column: columnHelper.accessor('filename', {
+      header: t('translation:game.filename'),
+      enableColumnFilter: true
+    })
+  }
+]
+
+const DEFAULT_COLUMN_KEYS = ['id', 'name']
+
 export default function Games() {
-  const columns = useMemo(
-    () => [
-      columnHelper.accessor('id', {
-        header: 'ID',
-        enableColumnFilter: true,
-        filterFn: 'includesString',
-        cell: (value) => value.getValue()?.toString()
-      }),
-      columnHelper.accessor('name', {
-        header: 'NAME',
-        enableColumnFilter: true
-      })
-    ],
-    []
+  const { t } = useTranslation()
+
+  const { selectedGamebase } = useSelectedGamebase()
+  const { getColumnKeys } = useColumnSelection('Game')
+
+  const availableColumns = useMemo<ColumnOption<GameDTO>[]>(
+    () => buildGameColumns(t as (key: string) => string),
+    [t]
   )
 
-  const createNew = (): GameDTO => {
-    return {
-      id: null,
-      name: '',
-      year: 0,
-      filename: '',
-      fileToRun: '',
-      filenameIndex: 0,
-      scrnshotFilename: '',
-      musician: null,
-      genre: null,
-      publisher: null,
-      difficulty: null,
-      cracker: null,
-      sidFilename: '',
-      highscore: '',
-      fav: false,
-      programmer: null,
-      language: null,
-      classic: 0,
-      rating: 0,
-      palNtsc: 0,
-      length: 0,
-      trainers: 0,
-      playersFrom: 0,
-      playersTo: 0,
-      playersSim: false,
-      adult: false,
-      memoText: '',
-      prequel: null,
-      sequel: null,
-      related: null,
-      control: 0,
-      crc: '',
-      filesize: 0,
-      version: 0,
-      gemus: '',
-      lengthType: 0,
-      comment: '',
-      versionComment: '',
-      loadingScreen: false,
-      highscoreSaver: false,
-      includedDocs: false,
-      trueDriveEmu: false,
-      artist: null,
-      developer: null,
-      license: null,
-      rarity: null,
-      weblinkName: '',
-      weblinkUrl: '',
-      playable: false,
-      original: false,
-      cloneOf: null,
-      reviewRating: 0
-    }
-  }
+  const defaultColumns = useMemo(
+    () => availableColumns.filter((c) => DEFAULT_COLUMN_KEYS.includes(c.key)).map((c) => c.column),
+    [availableColumns]
+  )
+
+  const defaultActiveKeys = useMemo(
+    () => defaultColumns.map((col) => (col as any).accessorKey ?? (col as any).id ?? ''),
+    [defaultColumns]
+  )
+
+  const initialColumnKeys = useMemo(() => getColumnKeys(defaultActiveKeys), [selectedGamebase?.id])
+
+  const createNew = (): GameDTO => ({
+    id: null,
+    name: '',
+    year: 0,
+    filename: '',
+    fileToRun: '',
+    filenameIndex: 0,
+    scrnshotFilename: '',
+    musician: null,
+    genre: null,
+    publisher: null,
+    difficulty: null,
+    cracker: null,
+    sidFilename: '',
+    highscore: '',
+    fav: false,
+    programmer: null,
+    language: null,
+    classic: 0,
+    rating: 0,
+    palNtsc: 0,
+    length: 0,
+    trainers: 0,
+    playersFrom: 0,
+    playersTo: 0,
+    playersSim: false,
+    adult: false,
+    memoText: '',
+    prequel: null,
+    sequel: null,
+    related: null,
+    control: 0,
+    crc: '',
+    filesize: 0,
+    version: 0,
+    gemus: '',
+    lengthType: 0,
+    comment: '',
+    versionComment: '',
+    loadingScreen: false,
+    highscoreSaver: false,
+    includedDocs: false,
+    trueDriveEmu: false,
+    artist: null,
+    developer: null,
+    license: null,
+    rarity: null,
+    weblinkName: '',
+    weblinkUrl: '',
+    playable: false,
+    original: false,
+    cloneOf: null,
+    reviewRating: 0
+  })
 
   const gameStore = useEntityStore((state) => state.gameObjects)
   const loadGames = useEntityStore((state) => state.loadGames)
 
+  if (!selectedGamebase) return null
+
   return (
     <MasterDetail
-      columns={columns}
+      key={selectedGamebase.id}
+      columns={defaultColumns}
+      availableColumns={availableColumns}
+      initialColumnKeys={initialColumnKeys}
       tableName="Game"
       DetailsPanel={GamePanel}
-      title={t('translation:menu.games')}
+      title={t('menu.games')}
       EditForm={GameForm}
       createNew={createNew}
       data={gameStore}

@@ -1,6 +1,5 @@
-import { Box, CircularProgress, Stack, TableCell, TableRow, useTheme } from '@mui/material'
+import { Box, CircularProgress, Stack, TableCell, TableRow, Tooltip, useTheme } from '@mui/material'
 import React, {
-  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -38,7 +37,11 @@ const TableHeader = <T,>({
   >
     {headerGroup.headers.map((header: Tanstack.Header<T, unknown>) => {
       return (
-        <TableCell key={header.id} colSpan={header.colSpan}>
+        <TableCell
+          key={header.id}
+          colSpan={header.colSpan}
+          style={{ width: header.getSize(), minWidth: header.getSize() }}
+        >
           <Stack direction="column">
             <Stack
               sx={{
@@ -141,16 +144,12 @@ export default function DataTable<T>({
     }
   }, [rowSelection, rows, onSelectionChange])
 
-  const headerGroups = useMemo(() => table.getHeaderGroups(), [table])
-
-  const fixedHeaderContent = useCallback((): ReactNode => {
-    if (noHeader) {
-      return null
-    }
-    return headerGroups.map((headerGroup) => (
-      <TableHeader<T> key={headerGroup.id} headerGroup={headerGroup} />
-    ))
-  }, [headerGroups, noHeader])
+  const fixedHeaderContent = (): ReactNode => {
+    if (noHeader) return null
+    return table
+      .getHeaderGroups()
+      .map((headerGroup) => <TableHeader<T> key={headerGroup.id} headerGroup={headerGroup} />)
+  }
 
   const TableComponent = useMemo(
     () =>
@@ -160,9 +159,10 @@ export default function DataTable<T>({
             {...props}
             style={{
               ...style,
-              width: '100%',
+              width: 'max-content',
+              minWidth: '100%',
               tableLayout: 'fixed',
-              borderCollapse: 'collapse',
+              borderCollapse: 'separate',
               borderSpacing: 0
             }}
           />
@@ -171,38 +171,48 @@ export default function DataTable<T>({
     []
   ) as ComponentType<TableProps & ContextProp<unknown>>
 
-  const TableRowComponent = useCallback(
-    (
-      props: React.DetailedHTMLProps<React.HTMLAttributes<HTMLTableRowElement>, HTMLTableRowElement>
-    ) => {
-      // eslint-disable-next-line react/prop-types
-      const index = props['data-index'] as number
-      const row = rows[index] as Tanstack.Row<T>
-
+  const TableRowComponent = React.memo(
+    ({ index, row, theme, ...props }: { index: number; row: any; theme: any } & any) => {
       return (
         <TableRow
           {...props}
           sx={[
-            row.getIsSelected() && {
-              background: theme.palette.secondary.main
-            },
-            {
-              '&:hover': {
-                boxShadow: 'inset 0 0 0 10em rgba(0, 0, 0, 0.1)'
-              }
-            }
+            row.getIsSelected() && { background: theme.palette.secondary.main },
+            { '&:hover': { boxShadow: 'inset 0 0 0 10em rgba(0, 0, 0, 0.1)' } }
           ]}
           onClick={() => row.toggleSelected()}
         >
-          {row.getVisibleCells().map((cell) => (
-            <TableCell key={cell.id} style={{ padding: '6px' }}>
+          {row.getVisibleCells().map((cell: any) => (
+            <TableCell
+              key={cell.id}
+              title={cell.getValue()?.toString()}
+              style={{
+                padding: '4px 6px',
+                width: cell.column.getSize(),
+                minWidth: cell.column.getSize(),
+                maxWidth: cell.column.getSize(),
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
+              }}
+            >
               {Tanstack.flexRender(cell.column.columnDef.cell, cell.getContext())}
             </TableCell>
           ))}
         </TableRow>
       )
-    },
-    [rows, theme.palette.secondary.main]
+    }
+  )
+
+  const components = useMemo(
+    () => ({
+      Table: TableComponent,
+      TableRow: (props: any) => {
+        const index = props['data-index']
+        return <TableRowComponent index={index} row={rows[index]} theme={theme} {...props} />
+      }
+    }),
+    [rows, theme]
   )
 
   if (loading) {
@@ -230,10 +240,7 @@ export default function DataTable<T>({
         }}
         totalCount={rows.length}
         data={rows}
-        components={{
-          Table: TableComponent,
-          TableRow: TableRowComponent
-        }}
+        components={components}
         fixedHeaderContent={fixedHeaderContent}
       />
     </Box>

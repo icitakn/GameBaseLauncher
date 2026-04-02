@@ -146,6 +146,7 @@
     "adult": "Adult Game",
     "favorite": "Favorite Game",
     "notes": "Notes",
+    "pal_ntsc": "PAL/NTSC",
     "messages": {
       "screenshots": "To view screenshots, set the image folder in the gamebase settings!"
     }
@@ -240,6 +241,11 @@
     "selected": "Selected",
     "select": "Select",
     "select_folder": "Select folder"
+  },
+  "column_dialog": {
+    "title": "Select columns",
+    "all": "All",
+    "none": "None"
   },
   "genre": {
     "parent": "Parent genre"

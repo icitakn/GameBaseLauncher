@@ -19,5 +19,5 @@ export function useSelectedGamebase() {
     }
   }, [gamebaseId, settings])
 
-  return { selectedGamebase, setSettings }
+  return { selectedGamebase, setSelectedGamebase, setSettings }
 }

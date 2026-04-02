@@ -22,6 +22,7 @@ export type GameBase = {
   emulators?: Emulator[] | null
   musicplayer?: string | null
   state?: string | null
+  columnSelections?: Record<string, string[]>
 }
 
 export type GamePlayed = {

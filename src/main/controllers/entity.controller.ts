@@ -79,6 +79,47 @@ const SLIM_FIELDS: Partial<Record<string, string[]>> = {
   Game: ['id', 'name']
 }
 
+/**
+ * FK fields of the game entity, that need a populate so that MikroORM
+ * won't just return a proxy object.
+ * Key = Fieldname in the entity, Value = populate path(s)
+ */
+const GAME_FK_FIELDS: Record<string, string[]> = {
+  musician: ['musician'],
+  genre: ['genre', 'genre.parent'],
+  publisher: ['publisher'],
+  difficulty: ['difficulty'],
+  cracker: ['cracker'],
+  programmer: ['programmer'],
+  language: ['language'],
+  prequel: ['prequel'],
+  sequel: ['sequel'],
+  related: ['related'],
+  artist: ['artist'],
+  developer: ['developer'],
+  license: ['license'],
+  rarity: ['rarity'],
+  cloneOf: ['cloneOf']
+}
+
+const getSlimPopulates = (
+  tableName: string,
+  fields: string[]
+): FindOptions<any, any, PopulatePath.ALL, never> => {
+  if (tableName !== 'Game') return {}
+
+  const populatePaths = new Set<string>()
+  for (const field of fields) {
+    const paths = GAME_FK_FIELDS[field]
+    if (paths) {
+      paths.forEach((p) => populatePaths.add(p))
+    }
+  }
+
+  if (populatePaths.size === 0) return {}
+  return { populate: [...populatePaths] as any }
+}
+
 export const registerEntityController = () => {
   ipcMain.handle(
     'entity:getAll',
@@ -118,11 +159,26 @@ export const registerEntityController = () => {
     async (event, tableName: string, gamebaseId: UUID, fields?: string[]) => {
       const { db } = await loadGamebase(gamebaseId)
 
+      const effectiveFields = fields ?? SLIM_FIELDS[tableName]
+
       const populateOptions: FindOptions<any, any, PopulatePath.ALL, never> = {}
 
-      const effectiveFields = fields ?? SLIM_FIELDS[tableName]
       if (effectiveFields) {
-        Object.assign(populateOptions, { fields: effectiveFields })
+        const expandedFields: string[] = []
+        for (const field of effectiveFields) {
+          if (GAME_FK_FIELDS[field]) {
+            expandedFields.push(`${field}.id`, `${field}.name`)
+            if (field === 'genre') {
+              expandedFields.push('genre.parent.id', 'genre.parent.name')
+            }
+          } else {
+            expandedFields.push(field)
+          }
+        }
+        Object.assign(populateOptions, { fields: expandedFields })
+
+        const fkPopulates = getSlimPopulates(tableName, effectiveFields)
+        Object.assign(populateOptions, fkPopulates)
       }
 
       const result = await getAllBatched(db, tableName, {}, populateOptions, {
