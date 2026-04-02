@@ -59,14 +59,6 @@ const toRefObject = (entity: { id?: number | null; name?: string | null } | null
 }
 
 export const GameForm = forwardRef<FormHandle, EditFormProps<GameDTO>>(({ selected }, ref) => {
-  // const [years, setYears] = useState([
-  //   ...UNDEFINED_YEARS,
-  //   ...YEARS.map((year) => ({
-  //     id: year,
-  //     label: year.toString()
-  //   }))
-  // ])
-
   const RATING: IdLabelObject[] = [
     { id: 0, label: t('translation:forms.game.fields.ratings.unknown') },
     { id: 1, label: t('translation:forms.game.fields.ratings.terrible') },

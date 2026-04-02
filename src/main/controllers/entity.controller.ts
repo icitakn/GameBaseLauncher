@@ -80,9 +80,9 @@ const SLIM_FIELDS: Partial<Record<string, string[]>> = {
 }
 
 /**
- * FK-Felder des Game-Entities, die ein populate benötigen damit MikroORM
- * nicht nur einen unaufgelösten Proxy zurückgibt.
- * Schlüssel = Feldname im DTO/Entity, Wert = populate-Pfad(e).
+ * FK fields of the game entity, that need a populate so that MikroORM
+ * won't just return a proxy object.
+ * Key = Fieldname in the entity, Value = populate path(s)
  */
 const GAME_FK_FIELDS: Record<string, string[]> = {
   musician: ['musician'],
@@ -102,10 +102,6 @@ const GAME_FK_FIELDS: Record<string, string[]> = {
   cloneOf: ['cloneOf']
 }
 
-/**
- * Leitet aus einer Liste von angeforderten Feldern die nötigen populate-Pfade ab.
- * Primitive Felder (year, rating, …) brauchen kein populate.
- */
 const getSlimPopulates = (
   tableName: string,
   fields: string[]
@@ -168,15 +164,10 @@ export const registerEntityController = () => {
       const populateOptions: FindOptions<any, any, PopulatePath.ALL, never> = {}
 
       if (effectiveFields) {
-        // Für FK-Felder (z. B. 'genre') müssen wir MikroORM explizit sagen,
-        // welche Sub-Felder geladen werden sollen (genre.id, genre.name).
-        // Ohne das liefert MikroORM nur einen unaufgelösten Proxy.
         const expandedFields: string[] = []
         for (const field of effectiveFields) {
           if (GAME_FK_FIELDS[field]) {
-            // FK-Feld: id + name des verknüpften Objekts mitladen
             expandedFields.push(`${field}.id`, `${field}.name`)
-            // genre hat zusätzlich ein parent
             if (field === 'genre') {
               expandedFields.push('genre.parent.id', 'genre.parent.name')
             }
@@ -186,7 +177,6 @@ export const registerEntityController = () => {
         }
         Object.assign(populateOptions, { fields: expandedFields })
 
-        // populate-Pfade für FK-Felder ergänzen
         const fkPopulates = getSlimPopulates(tableName, effectiveFields)
         Object.assign(populateOptions, fkPopulates)
       }

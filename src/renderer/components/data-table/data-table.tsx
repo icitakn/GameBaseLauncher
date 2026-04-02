@@ -185,7 +185,7 @@ export default function DataTable<T>({
           {row.getVisibleCells().map((cell: any) => (
             <TableCell
               key={cell.id}
-              title={cell.getValue()?.toString()} // Natives Tooltip statt MUI Tooltip (Performance!)
+              title={cell.getValue()?.toString()}
               style={{
                 padding: '4px 6px',
                 width: cell.column.getSize(),

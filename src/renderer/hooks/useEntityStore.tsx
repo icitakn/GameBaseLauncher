@@ -518,8 +518,6 @@ const useEntityStore = create<State>((set, get) => ({
         }
       })
 
-      // fields explizit übergeben; fehlt der Parameter, greift das Backend
-      // auf SLIM_FIELDS['Game'] = ['id', 'name'] zurück
       const games: GameDTO[] = await window.electron.getSlim('Game', gamebaseId, fields)
 
       removeListener()
