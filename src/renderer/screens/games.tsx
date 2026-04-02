@@ -7,15 +7,11 @@ import { useMemo } from 'react'
 import { GameDTO, Genre } from '@shared/models/form-schemes.model'
 import { useTranslation } from 'react-i18next'
 import { ColumnOption } from '../components/column-picker/column-picker-dialog'
-import { UNDEFINED_YEARS_MAP } from '@shared/consts'
 import { genreAccessor, nameOfAccessors, yearAccessor } from '@renderer/lib/column-accessors'
+import { useColumnSelection } from '@renderer/hooks/useColumnSelection'
+import { useSelectedGamebase } from '@renderer/hooks/useGamebase'
 
 const columnHelper = createColumnHelper<GameDTO>()
-
-const nameOf = (val: unknown): string => {
-  if (!val) return ''
-  return typeof val === 'object' && 'name' in val ? (val as { name: string }).name : String(val)
-}
 
 const getFullGenreLabel = (genre: Genre): string => {
   if (!genre.parent) {
@@ -232,6 +228,9 @@ const DEFAULT_COLUMN_KEYS = ['id', 'name']
 export default function Games() {
   const { t } = useTranslation()
 
+  const { selectedGamebase } = useSelectedGamebase()
+  const { getColumnKeys } = useColumnSelection('Game')
+
   const availableColumns = useMemo<ColumnOption<GameDTO>[]>(
     () => buildGameColumns(t as (key: string) => string),
     [t]
@@ -241,6 +240,13 @@ export default function Games() {
     () => availableColumns.filter((c) => DEFAULT_COLUMN_KEYS.includes(c.key)).map((c) => c.column),
     [availableColumns]
   )
+
+  const defaultActiveKeys = useMemo(
+    () => defaultColumns.map((col) => (col as any).accessorKey ?? (col as any).id ?? ''),
+    [defaultColumns]
+  )
+
+  const initialColumnKeys = useMemo(() => getColumnKeys(defaultActiveKeys), [selectedGamebase?.id])
 
   const createNew = (): GameDTO => ({
     id: null,
@@ -300,10 +306,14 @@ export default function Games() {
   const gameStore = useEntityStore((state) => state.gameObjects)
   const loadGames = useEntityStore((state) => state.loadGames)
 
+  if (!selectedGamebase) return null
+
   return (
     <MasterDetail
+      key={selectedGamebase.id}
       columns={defaultColumns}
       availableColumns={availableColumns}
+      initialColumnKeys={initialColumnKeys}
       tableName="Game"
       DetailsPanel={GamePanel}
       title={t('menu.games')}

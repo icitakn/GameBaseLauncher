@@ -5,7 +5,6 @@ import { GameBase } from '@shared/models/settings.model'
 export function useColumnSelection(tableName: string) {
   const { selectedGamebase, setSelectedGamebase } = useSelectedGamebase()
 
-  /** Gibt die gespeicherten Keys zurück, Fallback auf defaultKeys. */
   const getColumnKeys = useCallback(
     (defaultKeys: string[]): string[] => {
       if (!selectedGamebase) return defaultKeys
@@ -16,7 +15,6 @@ export function useColumnSelection(tableName: string) {
     [selectedGamebase, tableName]
   )
 
-  /** Speichert die Keys in der GameBase-Config und persistiert in config.json. */
   const saveColumnKeys = useCallback(
     async (keys: string[]) => {
       if (!selectedGamebase) return

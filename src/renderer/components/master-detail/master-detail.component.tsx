@@ -55,6 +55,7 @@ export interface MasterDetailProps<T> {
   createNew: () => T
   data: T[]
   loadData: (gamebaseId: UUID, fields?: string[]) => Promise<void>
+  initialColumnKeys?: string[]
 }
 
 export function MasterDetail<T extends { id?: number | null; name?: string }>({
@@ -66,7 +67,8 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
   EditForm,
   createNew,
   data,
-  loadData
+  loadData,
+  initialColumnKeys
 }: MasterDetailProps<T>) {
   const { selectedGamebase } = useSelectedGamebase()
   const [selected, setSelected] = useState<T | null>()
@@ -86,14 +88,10 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
   )
 
   const { getColumnKeys, saveColumnKeys } = useColumnSelection(tableName)
-  const [activeColumnKeys, setActiveColumnKeys] = useState<string[]>(() =>
-    availableColumns ? getColumnKeys(defaultActiveKeys) : defaultActiveKeys
+  const [activeColumnKeys, setActiveColumnKeys] = useState<string[]>(
+    () =>
+      initialColumnKeys ?? (availableColumns ? getColumnKeys(defaultActiveKeys) : defaultActiveKeys)
   )
-
-  useEffect(() => {
-    if (!availableColumns) return
-    setActiveColumnKeys(getColumnKeys(defaultActiveKeys))
-  }, [selectedGamebase?.id])
 
   const tableColumns = useMemo(() => {
     if (!availableColumns) return columns
@@ -101,9 +99,13 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
   }, [availableColumns, activeColumnKeys, columns])
 
   const formRef = useRef<FormHandle>(null)
+  const forceReload = useRef(false)
 
   useEffect(() => {
     if (!selectedGamebase) return
+    if (data.length > 0 && !forceReload.current) return
+
+    forceReload.current = false
     setLoading(true)
     loadData(selectedGamebase.id, activeColumnKeys).finally(() => setLoading(false))
   }, [selectedGamebase?.id, activeColumnKeys])
@@ -113,6 +115,7 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
   }, [edit])
 
   const handleColumnChange = async (keys: string[]) => {
+    forceReload.current = true
     setActiveColumnKeys(keys)
     await saveColumnKeys(keys)
   }
