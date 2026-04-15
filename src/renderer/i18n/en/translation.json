@@ -74,6 +74,7 @@
       "images_folder": "Images folder",
       "music_folder": "Music folder",
       "photos_folder": "Photos folder",
+      "extras_folder": "Extras folder",
       "gemus_file": "GEMUS script file"
     },
     "errors": {

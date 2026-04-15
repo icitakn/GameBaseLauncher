@@ -3,7 +3,8 @@ import { statSync, existsSync, lstatSync, readdirSync, readFileSync, writeFileSy
 import { C64Parser, parse } from '../parser/c64_parser_lib'
 import { Settings } from '../../shared/models/settings.model'
 import path from 'path'
-import { app } from 'electron'
+import { app, shell } from 'electron'
+import { ExtraFileResult } from '@shared/types/file.types'
 
 const CONFIG_FILE = 'config.json'
 
@@ -199,5 +200,62 @@ export function readC64FromZip(zipPath: string, c64FileName: string) {
     return result
   } catch (error) {
     throw new Error(`Error while reading "${c64FileName}" from "${normalizedFilename}": ${error}`)
+  }
+}
+
+export function readExtraFile(filePath: string, extraFolder: string): ExtraFileResult {
+  const fullPath = path.join(extraFolder, filePath)
+  console.log('Path ', fullPath)
+  const normalized = normalizePath(fullPath)
+  const ext = path.extname(filePath).toLowerCase()
+
+  // avi is not fully supported by chromium, so open it externally
+  if (ext === '.avi') {
+    const run = async () => {
+      await shell.openPath(fullPath)
+    }
+    run()
+  }
+
+  switch (ext) {
+    case '.jpg':
+    case '.jpeg':
+    case '.png':
+      return {
+        type: 'image',
+        mimeType: 'image/jpeg',
+        data: readFileSync(normalized).toString('base64')
+      }
+
+    case '.pdf':
+      return {
+        type: 'pdf',
+        mimeType: 'application/pdf',
+        data: readFileSync(normalized).toString('base64')
+      }
+
+    case '.txt':
+      return {
+        type: 'text',
+        mimeType: 'text/plain',
+        data: readFileSync(normalized, { encoding: 'utf8' })
+      }
+
+    case '.avi':
+      return {
+        type: 'video',
+        mimeType: 'video/avi',
+        filePath: normalized
+      }
+
+    case '.mp4':
+      return {
+        type: 'video',
+        mimeType: 'video/x-msvideo',
+        filePath: normalized
+      }
+
+    default:
+      throw new Error(`Unsupported file type: ${ext}`)
   }
 }

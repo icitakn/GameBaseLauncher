@@ -7,7 +7,8 @@ import {
   listFilesInContainer,
   listFilesInZip,
   readC64FromZip,
-  readDir
+  readDir,
+  readExtraFile
 } from '../services/file.service'
 import { checkImportFile } from '../services/database.service'
 import { GameDTO } from '@shared/models/form-schemes.model'
@@ -17,6 +18,7 @@ import { exec } from 'child_process'
 import * as os from 'os'
 import { readdirSync } from 'fs'
 import log from 'electron-log'
+import { ExtraFileResult } from '@shared/types/file.types'
 
 export const registerFileController = () => {
   ipcMain.handle('file:getOrCreateSettings', async () => {
@@ -137,4 +139,11 @@ export const registerFileController = () => {
       }
     }
   })
+
+  ipcMain.handle(
+    'file:readExtra',
+    async (_, filePath: string, extraFolder: string): Promise<ExtraFileResult> => {
+      return readExtraFile(filePath, extraFolder)
+    }
+  )
 }

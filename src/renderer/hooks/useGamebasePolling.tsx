@@ -22,7 +22,7 @@ export function useGamebasePolling() {
       const hasChanged = previousJson !== currentJson
 
       if (hasChanged) {
-        console.log('Gamebase state changed - resetting interval')
+        // console.log('Gamebase state changed - resetting interval')
         // IMPORTANT: Create new reference so React detects the update
         setSettings({
           ...updatedSettings,
@@ -32,7 +32,7 @@ export function useGamebasePolling() {
         previousGamebasesRef.current = updatedSettings.gamebases
       } else {
         unchangedCountRef.current += 1
-        console.log(`No change detected - unchanged count: ${unchangedCountRef.current}`)
+        // console.log(`No change detected - unchanged count: ${unchangedCountRef.current}`)
       }
 
       // Determine interval
@@ -46,7 +46,7 @@ export function useGamebasePolling() {
       if (hasActiveImports) {
         // During import: 1-2 seconds
         nextInterval = hasChanged ? 1000 : 2000
-        console.log(`Active import detected - interval: ${nextInterval}ms`)
+        // console.log(`Active import detected - interval: ${nextInterval}ms`)
       } else {
         // No active import: scale up slowly
         if (unchangedCountRef.current >= 10) {
@@ -58,9 +58,9 @@ export function useGamebasePolling() {
         } else {
           nextInterval = 2000 // 2 seconds
         }
-        console.log(
-          `No active import - interval: ${nextInterval}ms (unchanged: ${unchangedCountRef.current})`
-        )
+        // console.log(
+        //   `No active import - interval: ${nextInterval}ms (unchanged: ${unchangedCountRef.current})`
+        // )
       }
 
       // Schedule next poll
@@ -73,7 +73,7 @@ export function useGamebasePolling() {
   }, [setSettings]) // setSettings as dependency
 
   useEffect(() => {
-    console.log('Starting gamebase polling')
+    // console.log('Starting gamebase polling')
     // Set initial reference
     previousGamebasesRef.current = settings?.gamebases
 
@@ -82,7 +82,7 @@ export function useGamebasePolling() {
 
     // Cleanup
     return () => {
-      console.log('Stopping gamebase polling')
+      // console.log('Stopping gamebase polling')
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
       }

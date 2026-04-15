@@ -260,4 +260,12 @@ export const registerEntityController = () => {
       }
     }
   )
+
+  ipcMain.handle('entity:loadExtras', async (_, id: number, gamebaseId: UUID) => {
+    const { db } = await loadGamebase(gamebaseId)
+    const em = db.em.fork()
+
+    const extras = await em.findAll('Extra', { where: { game: { id } } })
+    return extras
+  })
 }

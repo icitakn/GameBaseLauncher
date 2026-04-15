@@ -1,5 +1,6 @@
 import { ipcRenderer } from 'electron'
 import { GameDTO } from '@shared/models/form-schemes.model'
+import { ExtraFileResult } from '@shared/types/file.types'
 
 export const fileApi = {
   getOrCreateSettings: () => ipcRenderer.invoke('file:getOrCreateSettings'),
@@ -10,5 +11,7 @@ export const fileApi = {
   readDir: (path: string) => ipcRenderer.invoke('file:readDir', path),
   readFile: (file: string, path: string, archive?: string) =>
     ipcRenderer.invoke('file:readFile', file, path, archive),
-  getAvailableDrives: () => ipcRenderer.invoke('file:getAvailableDrives')
+  getAvailableDrives: () => ipcRenderer.invoke('file:getAvailableDrives'),
+  readExtra: (filePath: string, extraFolder: string): Promise<ExtraFileResult> =>
+    ipcRenderer.invoke('file:readExtra', filePath, extraFolder)
 }
