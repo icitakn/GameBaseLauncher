@@ -19,6 +19,10 @@ import * as os from 'os'
 import { readdirSync } from 'fs'
 import log from 'electron-log'
 import { ExtraFileResult } from '@shared/types/file.types'
+import { execute } from '../services/executor.service'
+import { GameBase } from '@shared/models/settings.model'
+import { Game } from '@main/entities/game.entity'
+import { GetReferenceFunction } from '@shared/types/database.types'
 
 export const registerFileController = () => {
   ipcMain.handle('file:getOrCreateSettings', async () => {
@@ -142,8 +146,38 @@ export const registerFileController = () => {
 
   ipcMain.handle(
     'file:readExtra',
-    async (_, filePath: string, extraFolder: string): Promise<ExtraFileResult> => {
-      return readExtraFile(filePath, extraFolder)
+    async (
+      _,
+      filePath: string,
+      fileToRun: string | undefined,
+      extraFolder: string,
+      gamebaseId: string
+    ): Promise<ExtraFileResult> => {
+      const fileResult = readExtraFile(filePath, extraFolder)
+      const settings = getSettings()
+      const gamebase = settings.gamebases.find((gb) => gb.id === gamebaseId)
+
+      if (fileResult.type === 'game' && gamebase?.emulators && gamebase.emulators.length > 0) {
+        console.log('Starting ', fileResult.filePath)
+        const tmpGamebase: GameBase = {
+          id: '1-1-1-1-1',
+          name: '',
+          dbFile: '',
+          folders: { games: '', extractTo: gamebase.folders?.extractTo },
+          emulators: [...gamebase.emulators]
+        }
+        const tmpGame: Game = {
+          name: fileToRun,
+          filename: fileResult.filePath,
+          fileToRun: fileToRun,
+          updateEntity: function (dto: GameDTO, resolve: GetReferenceFunction): void {
+            throw new Error('Function not implemented.')
+          }
+        }
+        execute(tmpGamebase, tmpGame, gamebase?.emulators[0].id)
+      }
+
+      return fileResult
     }
   )
 }

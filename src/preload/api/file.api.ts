@@ -12,6 +12,11 @@ export const fileApi = {
   readFile: (file: string, path: string, archive?: string) =>
     ipcRenderer.invoke('file:readFile', file, path, archive),
   getAvailableDrives: () => ipcRenderer.invoke('file:getAvailableDrives'),
-  readExtra: (filePath: string, extraFolder: string): Promise<ExtraFileResult> =>
-    ipcRenderer.invoke('file:readExtra', filePath, extraFolder)
+  readExtra: (
+    filePath: string,
+    fileToRun: string | undefined,
+    extraFolder: string,
+    gamebaseId: string
+  ): Promise<ExtraFileResult> =>
+    ipcRenderer.invoke('file:readExtra', filePath, fileToRun, extraFolder, gamebaseId)
 }

@@ -1,4 +1,4 @@
-export type ExtraFileType = 'image' | 'pdf' | 'text' | 'video'
+export type ExtraFileType = 'image' | 'pdf' | 'text' | 'video' | 'game'
 
 export interface ExtraFileResult {
   type: ExtraFileType

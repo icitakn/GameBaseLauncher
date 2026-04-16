@@ -255,6 +255,13 @@ export function readExtraFile(filePath: string, extraFolder: string): ExtraFileR
         filePath: normalized
       }
 
+    // case '.zip':
+    //   return {
+    //     type: 'game',
+    //     mimeType: 'application/game',
+    //     filePath: normalized
+    //   }
+
     default:
       throw new Error(`Unsupported file type: ${ext}`)
   }

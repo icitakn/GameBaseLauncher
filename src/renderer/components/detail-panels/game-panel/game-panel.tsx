@@ -185,7 +185,12 @@ export function GamePanel({ selected, selectedGamebase }: GamePanelProps): React
     setLoadingExtraFile(true)
     setExtraDialogOpen(true)
     try {
-      const result = await window.electron.readExtra(extra.path, selectedGamebase.folders.extras)
+      const result = await window.electron.readExtra(
+        extra.path,
+        extra?.fileToRun ?? undefined,
+        selectedGamebase.folders.extras,
+        selectedGamebase.id
+      )
       setExtraFile(result)
     } catch (e) {
       toast.error(t('common.error_occured') + e)
