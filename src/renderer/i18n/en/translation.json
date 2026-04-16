@@ -20,7 +20,8 @@
     "no": "No",
     "yes": "Yes",
     "saving": "Saving...",
-    "play": "Play"
+    "play": "Play",
+    "open": "Open"
   },
   "home": "Home",
   "settings": {
@@ -40,6 +41,7 @@
     "developers": "Developers",
     "crackers": "Crackers",
     "musics": "Musics",
+    "extras": "Extras",
     "masterdata": "Master data",
     "gb_settings": "GB settings",
     "add_gamebase": "Add a new Gamebase",
@@ -250,5 +252,13 @@
   },
   "genre": {
     "parent": "Parent genre"
+  },
+  "extra": {
+    "game": "Game",
+    "path": "Path",
+    "file_to_run": "File to run",
+    "display_order": "Display order",
+    "type": "Type",
+    "data": "Data"
   }
 }

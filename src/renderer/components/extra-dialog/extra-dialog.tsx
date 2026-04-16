@@ -39,7 +39,6 @@ function VideoPlayer({ filePath, mimeType }: { filePath: string; mimeType: strin
 export function ExtraDialog({ open, loading, file, onClose }: ExtraDialogProps) {
   const objectUrlRef = useRef<string | null>(null)
 
-  // Beim Schließen aufräumen:
   useEffect(() => {
     if (!open && objectUrlRef.current) {
       URL.revokeObjectURL(objectUrlRef.current)
