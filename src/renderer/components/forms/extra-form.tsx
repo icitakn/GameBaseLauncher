@@ -1,4 +1,4 @@
-import { Stack, TextField } from '@mui/material'
+import { Button, Stack, TextField } from '@mui/material'
 import { EditFormProps, FormHandle } from '../master-detail/master-detail.component'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
@@ -9,6 +9,10 @@ import { useSelectedGamebase } from '@renderer/hooks/useGamebase'
 import useEntityStore from '@renderer/hooks/useEntityStore'
 import FormAutocomplete from './components/form-autocomplete'
 import FormTextField from './components/form-textfield'
+import { SEPARATOR } from '@shared/consts'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faFile } from '@fortawesome/free-solid-svg-icons'
+import { useFileDialog } from '@renderer/hooks/useFileDialog'
 
 export const ExtraForm = forwardRef<FormHandle, EditFormProps<ExtraDTO>>(({ selected }, ref) => {
   const {
@@ -16,6 +20,7 @@ export const ExtraForm = forwardRef<FormHandle, EditFormProps<ExtraDTO>>(({ sele
     handleSubmit,
     formState: { isValid, isDirty, isSubmitting },
     setValue,
+    getValues,
     clearErrors
   } = useForm({
     defaultValues: {
@@ -35,6 +40,7 @@ export const ExtraForm = forwardRef<FormHandle, EditFormProps<ExtraDTO>>(({ sele
   const { upsertEntity } = useEntityStore()
   const gameStore = useEntityStore((state) => state.games)
   const loadGames = useEntityStore((state) => state.loadGames)
+  const { openDialog } = useFileDialog()
 
   useEffect(() => {
     if (selected) {
@@ -81,6 +87,48 @@ export const ExtraForm = forwardRef<FormHandle, EditFormProps<ExtraDTO>>(({ sele
     isDirty
   }))
 
+  const handleFileClick = async (key: keyof ExtraDTO) => {
+    let archiveFile
+    let rootPath
+    let preselected
+    let containerFile
+    if (key === 'path') {
+      rootPath = gamebase?.folders?.extras
+      preselected = rootPath.endsWith(SEPARATOR)
+        ? rootPath + getValues('path')
+        : rootPath + SEPARATOR + getValues('path')
+
+      console.log('file root:', rootPath)
+      console.log('file pre:', preselected)
+    }
+    if (key === 'fileToRun' && gamebase?.folders?.extras) {
+      preselected = getValues('fileToRun')
+      archiveFile = gamebase.folders.extras.endsWith(SEPARATOR)
+        ? gamebase.folders.extras + getValues('path')
+        : gamebase.folders.extras + SEPARATOR + getValues('path')
+    }
+
+    const selected = await openDialog({
+      mode: 'file',
+      title: t('translation:file_dialog.title'),
+      multiSelect: false,
+      archiveFile,
+      rootPath,
+      preselectedPath: preselected,
+      containerFile
+    })
+
+    let relPath = (selected.path as string).replace(gamebase?.folders?.extras ?? '', '')
+    if (relPath.startsWith('/')) {
+      relPath = relPath.replace('/', '')
+    }
+    if (relPath.startsWith('\\')) {
+      relPath = relPath.replace('\\', '')
+    }
+
+    setValue(key, relPath)
+  }
+
   return (
     <Fragment>
       {gamebase && (
@@ -111,12 +159,34 @@ export const ExtraForm = forwardRef<FormHandle, EditFormProps<ExtraDTO>>(({ sele
                   : undefined
               }
             />
-            <FormTextField control={control} name="path" label={t('translation:extra.path')} />
-            <FormTextField
-              control={control}
-              name="fileToRun"
-              label={t('translation:extra.file_to_run')}
-            />
+            <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
+              <FormTextField
+                control={control}
+                name="path"
+                label={t('translation:extra.path')}
+                sx={{ flexGrow: 1 }}
+              />
+              <Button variant="outlined" color="primary" onClick={() => handleFileClick('path')}>
+                <FontAwesomeIcon icon={faFile}></FontAwesomeIcon>
+              </Button>
+            </Stack>
+
+            <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
+              <FormTextField
+                control={control}
+                name="fileToRun"
+                label={t('translation:extra.file_to_run')}
+                sx={{ flexGrow: 1 }}
+              />
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={() => handleFileClick('fileToRun')}
+              >
+                <FontAwesomeIcon icon={faFile}></FontAwesomeIcon>
+              </Button>
+            </Stack>
+
             <FormTextField
               control={control}
               name="displayOrder"

@@ -42,7 +42,7 @@ const ENTITY_MAP = {
   License
 } as const
 
-const ENTITIES_WITH_REFERENCES = new Set(['Game', 'Genre', 'Music'])
+const ENTITIES_WITH_REFERENCES = new Set(['Game', 'Genre', 'Music', 'Extra'])
 
 const getPopulates = (tableName: string) => {
   let populate: FindOptions<any, any, PopulatePath.ALL, never> = {}
