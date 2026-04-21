@@ -108,7 +108,7 @@ export const ExtraForm = forwardRef<FormHandle, EditFormProps<ExtraDTO>>(({ sele
     let rootPath
     let preselected
     let containerFile
-    if (key === 'path') {
+    if (key === 'path' && gamebase?.folders?.extras) {
       rootPath = gamebase?.folders?.extras
       preselected = rootPath.endsWith(SEPARATOR)
         ? rootPath + getValues('path')

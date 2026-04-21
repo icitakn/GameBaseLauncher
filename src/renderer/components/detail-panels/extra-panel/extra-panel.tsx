@@ -1,4 +1,4 @@
-import { ExtraDTO } from '@shared/models/form-schemes.model'
+import { ExtraDTO, IdLabelObject } from '@shared/models/form-schemes.model'
 import { GameBase } from '@shared/models/settings.model'
 import { Button, Grid2, Stack } from '@mui/material'
 import { t } from 'i18next'
@@ -35,6 +35,12 @@ export function ExtraPanel({ selected, selectedGamebase }: ExtraPanelProps): Rea
   const [extraFile, setExtraFile] = useState<ExtraFileResult | null>(null)
   const [extraDialogOpen, setExtraDialogOpen] = useState(false)
   const [loadingExtraFile, setLoadingExtraFile] = useState(false)
+  const TYPES: IdLabelObject[] = [
+    { id: 0, label: t('translation:extra.types.standard') },
+    { id: 1, label: t('translation:extra.types.gemus') },
+    { id: 2, label: t('translation:extra.types.music') },
+    { id: 3, label: t('translation:extra.types.url') }
+  ]
 
   async function handleExtraClick(): Promise<void> {
     if (!selected?.path) return
@@ -71,7 +77,10 @@ export function ExtraPanel({ selected, selectedGamebase }: ExtraPanelProps): Rea
             <InfoLine label={t('translation:extra.game')} value={selected?.game?.name} />
             <InfoLine label={t('translation:extra.path')} value={selected?.path} />
             <InfoLine label={t('translation:extra.display_order')} value={selected?.displayOrder} />
-            <InfoLine label={t('translation:extra.type')} value={selected?.type} />
+            <InfoLine
+              label={t('translation:extra.type')}
+              value={TYPES.find((type) => type.id === selected?.type)?.label}
+            />
             <InfoLine label={t('translation:extra.data')} value={selected?.data} />
             <InfoLine label={t('translation:extra.file_to_run')} value={selected?.fileToRun} />
           </Grid2>
