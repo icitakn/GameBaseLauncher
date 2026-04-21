@@ -1,8 +1,8 @@
-import { Button, Stack, TextField } from '@mui/material'
+import { Box, Button, Stack, TextField, Typography } from '@mui/material'
 import { EditFormProps, FormHandle } from '../master-detail/master-detail.component'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { ExtraDTO, extraSchema } from '@shared/models/form-schemes.model'
+import { ExtraDTO, extraSchema, IdLabelObject } from '@shared/models/form-schemes.model'
 import { forwardRef, Fragment, useEffect, useImperativeHandle } from 'react'
 import { t } from 'i18next'
 import { useSelectedGamebase } from '@renderer/hooks/useGamebase'
@@ -13,8 +13,23 @@ import { SEPARATOR } from '@shared/consts'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faFile } from '@fortawesome/free-solid-svg-icons'
 import { useFileDialog } from '@renderer/hooks/useFileDialog'
+import FormSelect from './components/form-select'
 
 export const ExtraForm = forwardRef<FormHandle, EditFormProps<ExtraDTO>>(({ selected }, ref) => {
+  const TYPES: IdLabelObject[] = [
+    { id: 0, label: t('translation:extra.types.standard') },
+    { id: 1, label: t('translation:extra.types.gemus') },
+    { id: 2, label: t('translation:extra.types.music') },
+    { id: 3, label: t('translation:extra.types.url') }
+  ]
+
+  const TYPES_EXPLANATIONS: IdLabelObject[] = [
+    { id: 0, label: t('translation:extra.types.explanations.standard') },
+    { id: 1, label: t('translation:extra.types.explanations.gemus') },
+    { id: 2, label: t('translation:extra.types.explanations.music') },
+    { id: 3, label: t('translation:extra.types.explanations.url') }
+  ]
+
   const {
     control,
     handleSubmit,
@@ -41,6 +56,7 @@ export const ExtraForm = forwardRef<FormHandle, EditFormProps<ExtraDTO>>(({ sele
   const gameStore = useEntityStore((state) => state.games)
   const loadGames = useEntityStore((state) => state.loadGames)
   const { openDialog } = useFileDialog()
+  const selectedType = useWatch({ control, name: 'type' })
 
   useEffect(() => {
     if (selected) {
@@ -192,7 +208,29 @@ export const ExtraForm = forwardRef<FormHandle, EditFormProps<ExtraDTO>>(({ sele
               name="displayOrder"
               label={t('translation:extra.display_order')}
             />
-            <FormTextField control={control} name="type" label={t('translation:extra.type')} />
+            <FormSelect
+              name="type"
+              control={control}
+              label={t('translation:extra.type')}
+              options={TYPES}
+            />
+            {selectedType !== null && selectedType !== undefined && (
+              <Box
+                sx={{
+                  borderLeft: '2px solid',
+                  borderColor: 'info.main',
+                  bgcolor: 'info.50',
+                  borderRadius: '0 4px 4px 0',
+                  px: 1.5,
+                  py: 0.75
+                }}
+              >
+                <Typography variant="caption" color="info.main" lineHeight={1.5}>
+                  {TYPES_EXPLANATIONS.find((expl) => expl.id === selectedType)?.label}
+                </Typography>
+              </Box>
+            )}
+
             <FormTextField control={control} name="data" label={t('translation:extra.data')} />
           </Stack>
         </form>

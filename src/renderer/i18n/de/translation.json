@@ -254,6 +254,18 @@
     "file_to_run": "Ausführbare Datei",
     "display_order": "Reihenfolge",
     "type": "Typ",
-    "data": "Daten"
+    "data": "Daten",
+    "types": {
+      "standard": "Standard",
+      "gemus": "GEMUS",
+      "music": "Musik",
+      "url": "URL",
+      "explanations": {
+        "standard": "Nutzt den Dateitypen um das Extra zu öffnen. Einige Extras (wie PDFs) können intern angezeigt werden, andere (wie AVIs) werden in einem externen Programm angezeigt.",
+        "gemus": "Benutzt GEMUS/einen Emulator um das Extra zu starten.",
+        "music": "Benutzt einen Music Player um das Extra zu starten.",
+        "url": "Das Extra wird als URL behandelt und in einem externen Browser angezeigt."
+      }
+    }
   }
 }

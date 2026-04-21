@@ -259,6 +259,18 @@
     "file_to_run": "File to run",
     "display_order": "Display order",
     "type": "Type",
-    "data": "Data"
+    "data": "Data",
+    "types": {
+      "standard": "Standard",
+      "gemus": "GEMUS",
+      "music": "Music",
+      "url": "URL",
+      "explanations": {
+        "standard": "Uses File Associations to run the extra. Some extras (like PDF) might be shown internally, some might (like AVI) open in an external viewer.",
+        "gemus": "Uses GEMUS/an emulator to run the Extra.",
+        "music": "Uses a music player to run the extra",
+        "url": "The extra is treated as a URL and is opened in a web browser."
+      }
+    }
   }
 }

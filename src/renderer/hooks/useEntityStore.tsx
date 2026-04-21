@@ -754,18 +754,23 @@ const useEntityStore = create<State>((set, get) => ({
         const updatedObjects = (state[objectsKey] as unknown[] as BaseEntity[]).filter(
           (obj) => obj.id !== id
         )
-
-        const updatedIdLabelObjects = (state[stateKey] as IdLabelObject[]).filter(
-          (item) => item.id !== id
-        )
-
         console.log('State after deletion', updatedObjects)
 
         toast.success(t('common.delete_success'))
 
+        if (stateKey) {
+          const updatedIdLabelObjects = (state[stateKey] as IdLabelObject[]).filter(
+            (item) => item.id !== id
+          )
+          return {
+            ...state,
+            [stateKey]: updatedIdLabelObjects,
+            [objectsKey]: updatedObjects
+          }
+        }
+
         return {
           ...state,
-          [stateKey]: updatedIdLabelObjects,
           [objectsKey]: updatedObjects
         }
       })
