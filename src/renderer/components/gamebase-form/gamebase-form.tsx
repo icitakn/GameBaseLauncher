@@ -36,7 +36,8 @@ export function GamebaseForm({ onSubmit, gamebase }: GamebaseFormProps) {
         games: '',
         images: '',
         music: '',
-        photos: ''
+        photos: '',
+        extras: ''
       },
       gemusScript: ''
     },
@@ -61,7 +62,8 @@ export function GamebaseForm({ onSubmit, gamebase }: GamebaseFormProps) {
           games: gamebase.folders?.games,
           images: gamebase.folders?.images,
           music: gamebase.folders?.music,
-          photos: gamebase.folders?.photos
+          photos: gamebase.folders?.photos,
+          extras: gamebase.folders?.extras
         }
       })
     }
@@ -400,6 +402,22 @@ export function GamebaseForm({ onSubmit, gamebase }: GamebaseFormProps) {
                 variant="outlined"
                 color="secondary"
                 onClick={() => handleFolderClick('photos')}
+              >
+                <FontAwesomeIcon icon={faFolder}></FontAwesomeIcon>
+              </Button>
+            </Stack>
+
+            <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
+              <FormTextField
+                control={control}
+                name="folders.extras"
+                label={t('translation:gamebase.form_fields.extras_folder')}
+                sx={{ flexGrow: 1 }}
+              />
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={() => handleFolderClick('extras')}
               >
                 <FontAwesomeIcon icon={faFolder}></FontAwesomeIcon>
               </Button>

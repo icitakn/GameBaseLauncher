@@ -38,7 +38,7 @@ interface EntityLoadingState {
 }
 
 const stateKeyMapper: {
-  [key: string]: { objectKey: keyof State; labelKey: keyof State }
+  [key: string]: { objectKey: keyof State; labelKey: keyof State | undefined }
 } = {
   Publisher: { objectKey: 'publisherObjects', labelKey: 'publishers' },
   Developer: { objectKey: 'developerObjects', labelKey: 'developers' },
@@ -52,7 +52,8 @@ const stateKeyMapper: {
   Language: { objectKey: 'languageObjects', labelKey: 'languages' },
   Difficulty: { objectKey: 'difficultyObjects', labelKey: 'difficulties' },
   Rarity: { objectKey: 'rarityObjects', labelKey: 'rarities' },
-  License: { objectKey: 'licenseObjects', labelKey: 'licenses' }
+  License: { objectKey: 'licenseObjects', labelKey: 'licenses' },
+  Extra: { objectKey: 'extraObjects', labelKey: undefined }
 }
 
 interface State {
@@ -695,29 +696,39 @@ const useEntityStore = create<State>((set, get) => ({
           obj.id === id ? updatedEntity[0] : obj
         )
 
-        const updatedIdLabelObjects = (state[stateKey] as IdLabelObject[]).map((item) =>
-          item.id === id && updatedData.name ? { ...item, label: updatedData.name } : item
-        )
-
         if (!id) {
           updatedObjects.push(updatedEntity[0])
-          updatedIdLabelObjects.push({
-            id: updatedEntity.id,
-            label: updatedEntity.name
-          })
         }
 
         console.log('State after ', updatedObjects)
-        if (updatedData.name) {
-          updatedIdLabelObjects.sort((a, b) => a.label?.localeCompare(b.label))
-        }
 
-        toast.success(t('translation:forms.messages.save_success'))
+        if (stateKey) {
+          const updatedIdLabelObjects = (state[stateKey] as IdLabelObject[]).map((item) =>
+            item.id === id && updatedData.name ? { ...item, label: updatedData.name } : item
+          )
+          if (!id) {
+            updatedIdLabelObjects.push({
+              id: updatedEntity.id,
+              label: updatedEntity.name
+            })
+          }
+          if (updatedData.name) {
+            updatedIdLabelObjects.sort((a, b) => a.label?.localeCompare(b.label))
+          }
+          toast.success(t('translation:forms.messages.save_success'))
 
-        return {
-          ...state,
-          [stateKey]: updatedIdLabelObjects,
-          [objectsKey]: updatedObjects
+          return {
+            ...state,
+            [stateKey]: updatedIdLabelObjects,
+            [objectsKey]: updatedObjects
+          }
+        } else {
+          toast.success(t('translation:forms.messages.save_success'))
+
+          return {
+            ...state,
+            [objectsKey]: updatedObjects
+          }
         }
       })
     } catch (error) {
@@ -743,18 +754,23 @@ const useEntityStore = create<State>((set, get) => ({
         const updatedObjects = (state[objectsKey] as unknown[] as BaseEntity[]).filter(
           (obj) => obj.id !== id
         )
-
-        const updatedIdLabelObjects = (state[stateKey] as IdLabelObject[]).filter(
-          (item) => item.id !== id
-        )
-
         console.log('State after deletion', updatedObjects)
 
         toast.success(t('common.delete_success'))
 
+        if (stateKey) {
+          const updatedIdLabelObjects = (state[stateKey] as IdLabelObject[]).filter(
+            (item) => item.id !== id
+          )
+          return {
+            ...state,
+            [stateKey]: updatedIdLabelObjects,
+            [objectsKey]: updatedObjects
+          }
+        }
+
         return {
           ...state,
-          [stateKey]: updatedIdLabelObjects,
           [objectsKey]: updatedObjects
         }
       })

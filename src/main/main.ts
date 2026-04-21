@@ -1,5 +1,5 @@
 import 'reflect-metadata'
-import { app, BrowserWindow, session } from 'electron'
+import { app, BrowserWindow, session, protocol, net } from 'electron'
 import path from 'path'
 import { registerGamebaseController, shutdown } from './controllers/gamebase.controller'
 import { registerEntityController } from './controllers/entity.controller'
@@ -7,9 +7,11 @@ import { registerExecuteController } from './controllers/execute.controller'
 import { registerFileController } from './controllers/file.controller'
 import { is } from '@electron-toolkit/utils'
 import log from 'electron-log'
+import { platform } from 'os'
 
 let appUrl = 'http://localhost:5173'
 const wsUrl = 'ws://localhost:5173'
+const CHROMIUM_PDF_VIEWER = 'chrome-extension://mhjfbmdgcfjbbpaeojofohoefgiehjai'
 
 const createWindow = (): void => {
   registerEntityController()
@@ -49,6 +51,10 @@ const createWindow = (): void => {
   session.defaultSession.webRequest.onBeforeRequest((details, callback) => {
     const allowed =
       details.url.startsWith('file://') ||
+      details.url.startsWith('localfile://') ||
+      details.url.startsWith('blob:') ||
+      details.url.startsWith(CHROMIUM_PDF_VIEWER) ||
+      details.url.startsWith('chrome://') ||
       details.url.startsWith('devtools://') ||
       details.url.startsWith(appUrl) ||
       details.url.startsWith(wsUrl)
@@ -76,9 +82,42 @@ if (!gotTheLock) {
     }
   })
 
+  protocol.registerSchemesAsPrivileged([
+    {
+      scheme: 'localfile',
+      privileges: {
+        standard: true,
+        secure: true,
+        stream: true,
+        supportFetchAPI: true,
+        bypassCSP: true
+      }
+    }
+  ])
+
   // This method will be called when Electron has finished
   // initialization and is ready to create browser windows.
   app.whenReady().then(() => {
+    protocol.handle('localfile', async (request) => {
+      let rawPath = request.url.replace('localfile://', '')
+      rawPath = rawPath.replace(/^([a-zA-Z])\//, '$1:/')
+      const fileUrl = platform() === 'win32' ? `file:///${rawPath}` : `file://${rawPath}`
+
+      console.log('Protocol request URL:', request.url)
+      console.log('Raw path:', rawPath)
+      console.log('File URL:', fileUrl)
+
+      try {
+        const response = await net.fetch(fileUrl)
+        console.log('Response status:', response.status)
+        console.log('Response headers:', Object.fromEntries(response.headers.entries()))
+        return response
+      } catch (error) {
+        console.error('Protocol handler error:', error)
+        throw error
+      }
+    })
+
     createWindow()
 
     app.on('activate', () => {

@@ -20,7 +20,8 @@
     "no": "No",
     "yes": "Yes",
     "saving": "Saving...",
-    "play": "Play"
+    "play": "Play",
+    "open": "Open"
   },
   "home": "Home",
   "settings": {
@@ -40,6 +41,7 @@
     "developers": "Developers",
     "crackers": "Crackers",
     "musics": "Musics",
+    "extras": "Extras",
     "masterdata": "Master data",
     "gb_settings": "GB settings",
     "add_gamebase": "Add a new Gamebase",
@@ -74,6 +76,7 @@
       "images_folder": "Images folder",
       "music_folder": "Music folder",
       "photos_folder": "Photos folder",
+      "extras_folder": "Extras folder",
       "gemus_file": "GEMUS script file"
     },
     "errors": {
@@ -249,5 +252,25 @@
   },
   "genre": {
     "parent": "Parent genre"
+  },
+  "extra": {
+    "game": "Game",
+    "path": "Path",
+    "file_to_run": "File to run",
+    "display_order": "Display order",
+    "type": "Type",
+    "data": "Data",
+    "types": {
+      "standard": "Standard",
+      "gemus": "GEMUS",
+      "music": "Music",
+      "url": "URL",
+      "explanations": {
+        "standard": "Uses File Associations to run the extra. Some extras (like PDF) might be shown internally, some might (like AVI) open in an external viewer.",
+        "gemus": "Uses GEMUS/an emulator to run the Extra.",
+        "music": "Uses a music player to run the extra",
+        "url": "The extra is treated as a URL and is opened in a web browser."
+      }
+    }
   }
 }

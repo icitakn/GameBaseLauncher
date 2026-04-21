@@ -37,7 +37,8 @@ export const gamebaseSchema = object().shape({
     extractTo: string().nullable(),
     images: string().nullable(),
     music: string().nullable(),
-    photos: string().nullable()
+    photos: string().nullable(),
+    extras: string().nullable()
   }),
   gemusScript: string().nullable()
 })
@@ -145,8 +146,8 @@ export const gameSchema = object().shape({
 
 export const extraSchema = object().shape({
   id: number().nullable(),
-  name: string().nullable(),
-  game: number().nullable(),
+  name: string().required(),
+  game: refObject.nullable(),
   displayOrder: number().nullable(),
   type: number().nullable(),
   path: string().nullable(),

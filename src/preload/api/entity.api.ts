@@ -44,5 +44,8 @@ export const entityApi = {
     ipcRenderer.invoke('entity:upsertEntity', entity, type, gamebaseId),
 
   deleteEntity: (entity: any, type: EntityType, gamebaseId: UUID) =>
-    ipcRenderer.invoke('entity:deleteEntity', entity, type, gamebaseId)
+    ipcRenderer.invoke('entity:deleteEntity', entity, type, gamebaseId),
+
+  loadExtras: (gameId: number, gamebaseId: UUID) =>
+    ipcRenderer.invoke('entity:loadExtras', gameId, gamebaseId)
 }

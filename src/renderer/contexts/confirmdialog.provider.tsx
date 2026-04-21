@@ -21,7 +21,6 @@ export const ConfirmDialogProvider = ({ children }: { children: ReactNode }) => 
     }))
     setIsOpen(true)
 
-    // Promise-basiertes Interface für einfachere Verwendung
     return new Promise((resolve, reject) => {
       setConfig((prevConfig) => ({
         ...prevConfig,

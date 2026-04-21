@@ -1,20 +1,28 @@
-import { GameDTO } from '@shared/models/form-schemes.model'
+import { ExtraDTO, GameDTO } from '@shared/models/form-schemes.model'
 import {
   Box,
   Button,
   ButtonGroup,
   CircularProgress,
   ClickAwayListener,
+  Container,
   Divider,
   Grid2,
   Grow,
   ImageList,
   ImageListItem,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
   MenuItem,
   MenuList,
   Paper,
   Popper,
-  Stack
+  Stack,
+  Tab,
+  Tabs
 } from '@mui/material'
 import { t } from 'i18next'
 import { ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -24,6 +32,11 @@ import useEntityStore from '@renderer/hooks/useEntityStore'
 import { GameBase } from '@shared/models/settings.model'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons'
+import { TabPanel } from '@renderer/components/common/tab-panel'
+import { UUID } from 'crypto'
+import { ExtraDialog } from '@renderer/components/extra-dialog/extra-dialog'
+import { ExtraFileResult } from '@shared/types/file.types'
+import path from 'path'
 
 const IMAGE_BASE64_PREFIX = 'data:image/png;base64, '
 
@@ -38,16 +51,44 @@ export function GamePanel({ selected, selectedGamebase }: GamePanelProps): React
   const [imageFolderError, setImageFolderError] = useState(false)
   const [emulatorMenuOpen, setEmulatorMenuOpen] = useState(false)
   const emulatorAnchorRef = useRef<HTMLDivElement>(null)
+  const [selectedTab, setSelectedTab] = useState(0)
 
   const { loadGameById } = useEntityStore()
   const [game, setGame] = useState<GameDTO | null>(null)
   const [loadingDetail, setLoadingDetail] = useState(true)
+  const [loadingExtras, setLoadingExtras] = useState(true)
+  const [extras, setExtras] = useState<ExtraDTO[]>([])
+
+  const [extraFile, setExtraFile] = useState<ExtraFileResult | null>(null)
+  const [extraDialogOpen, setExtraDialogOpen] = useState(false)
+  const [loadingExtraFile, setLoadingExtraFile] = useState(false)
+
+  const loadXtra = async (id: number, gamebaseId: UUID) => {
+    setLoadingExtras(true)
+    try {
+      const extras = await window.electron.loadExtras(id, gamebaseId)
+      console.log('extras', extras)
+      setExtras(extras)
+    } finally {
+      setLoadingExtras(false)
+    }
+  }
+
+  const handleTabChange = (event: React.SyntheticEvent, newTab: number) => {
+    setSelectedTab(newTab)
+    if (newTab === 1) {
+      if (game?.id && selectedGamebase?.id) {
+        loadXtra(game.id, selectedGamebase.id)
+      }
+    }
+  }
 
   useEffect(() => {
-    const load = async (id, gamebaseId) => {
+    const load = async (id: number, gamebaseId: UUID) => {
       setLoadingDetail(true)
       try {
         const fullGame = await loadGameById(id, gamebaseId)
+        setSelectedTab(0)
         setGame(fullGame)
       } finally {
         setLoadingDetail(false)
@@ -135,6 +176,28 @@ export function GamePanel({ selected, selectedGamebase }: GamePanelProps): React
         <CircularProgress />
       </Stack>
     )
+  }
+
+  async function handleExtraClick(extra: ExtraDTO): Promise<void> {
+    if (!extra.path) return
+    if (!selectedGamebase?.folders?.extras) return
+
+    setLoadingExtraFile(true)
+    setExtraDialogOpen(true)
+    try {
+      const result = await window.electron.readExtra(
+        extra.path,
+        extra?.fileToRun ?? undefined,
+        selectedGamebase.folders.extras,
+        selectedGamebase.id
+      )
+      setExtraFile(result)
+    } catch (e) {
+      toast.error(t('common.error_occured') + e)
+      setExtraDialogOpen(false)
+    } finally {
+      setLoadingExtraFile(false)
+    }
   }
 
   return (
@@ -260,26 +323,61 @@ export function GamePanel({ selected, selectedGamebase }: GamePanelProps): React
             </Button>
           )}
           <Divider variant="middle" component="div" />
-          <Grid2 container spacing={2} sx={{ overflowY: 'auto', flex: 1 }}>
-            <InfoLine label={t('translation:game.release')} value={selectedYear} />
-            <InfoLine label={t('translation:game.developer')} value={game.developer?.name} />
-            <InfoLine label={t('translation:game.programmer')} value={game.programmer?.name} />
-            <InfoLine label={t('translation:game.musician')} value={game.musician?.name} />
-            <InfoLine label={t('translation:game.artist')} value={game.artist?.name} />
-            <InfoLine label={t('translation:game.publisher')} value={game.publisher?.name} />
-            <InfoLine label={t('translation:game.cracker')} value={game.cracker?.name} />
-            <InfoLine label={t('translation:game.genre')} value={game.genre?.name} />
-            <InfoLine
-              label={t('translation:game.player_number')}
-              value={
-                game.playersFrom && game.playersFrom !== game.playersTo
-                  ? game.playersFrom + ' - ' + game.playersTo
-                  : game.playersFrom
-              }
-            />
-          </Grid2>
+          <Tabs value={selectedTab} onChange={handleTabChange}>
+            <Tab label={'Game info'} />
+            <Tab label={'Extras'} />
+          </Tabs>
+
+          <TabPanel value={selectedTab} index={0} sx={{ overflowY: 'auto', flex: 1 }}>
+            <Grid2 container spacing={2} sx={{ overflowY: 'auto', flex: 1 }}>
+              <InfoLine label={t('translation:game.release')} value={selectedYear} />
+              <InfoLine label={t('translation:game.developer')} value={game.developer?.name} />
+              <InfoLine label={t('translation:game.programmer')} value={game.programmer?.name} />
+              <InfoLine label={t('translation:game.musician')} value={game.musician?.name} />
+              <InfoLine label={t('translation:game.artist')} value={game.artist?.name} />
+              <InfoLine label={t('translation:game.publisher')} value={game.publisher?.name} />
+              <InfoLine label={t('translation:game.cracker')} value={game.cracker?.name} />
+              <InfoLine label={t('translation:game.genre')} value={game.genre?.name} />
+              <InfoLine
+                label={t('translation:game.player_number')}
+                value={
+                  game.playersFrom && game.playersFrom !== game.playersTo
+                    ? game.playersFrom + ' - ' + game.playersTo
+                    : game.playersFrom
+                }
+              />
+            </Grid2>
+          </TabPanel>
+          <TabPanel value={selectedTab} index={1} sx={{ overflowY: 'auto', flex: 1 }}>
+            {loadingExtras && (
+              <Container>
+                <CircularProgress />
+              </Container>
+            )}
+            {!loadingExtras && (
+              <List>
+                {extras.map((extra) => (
+                  <ListItem disablePadding key={extra.id}>
+                    <ListItemButton onClick={() => handleExtraClick(extra)}>
+                      <ListItemText primary={extra.name} />
+                    </ListItemButton>
+                  </ListItem>
+                ))}
+              </List>
+            )}
+          </TabPanel>
         </Stack>
       )}
+
+      <ExtraDialog
+        open={extraDialogOpen}
+        loading={loadingExtraFile}
+        file={extraFile}
+        onClose={() => {
+          setExtraDialogOpen(false)
+          setExtraFile(null)
+        }}
+      />
     </Stack>
   )
 }

@@ -18,6 +18,7 @@ export type GameBase = {
     images?: string | null
     music?: string | null
     photos?: string | null
+    extras?: string | null
   }
   emulators?: Emulator[] | null
   musicplayer?: string | null

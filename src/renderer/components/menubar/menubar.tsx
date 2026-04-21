@@ -21,6 +21,7 @@ import {
   faLaptopCode,
   faMusic,
   faPaintBrush,
+  faPhotoFilm,
   faPlusCircle
 } from '@fortawesome/free-solid-svg-icons'
 import MenuItem from '@mui/material/MenuItem'
@@ -177,6 +178,11 @@ export function Menubar() {
       uri: '/musics',
       label: t('translation:menu.musics'),
       icon: <FontAwesomeIcon icon={faMusic} />
+    },
+    {
+      uri: '/extras',
+      label: t('translation:menu.extras'),
+      icon: <FontAwesomeIcon icon={faPhotoFilm} />
     },
     {
       uri: '/masterdata',
