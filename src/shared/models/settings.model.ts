@@ -47,6 +47,11 @@ export type MusicListened = {
 
 export type Settings = {
   language: string
+  rememberLastPosition: boolean
+  lastPosition: {
+    baseUrl: string
+    entry: number
+  }
   gamebases: GameBase[]
   stats: {
     gamesPlayed: GamePlayed[]

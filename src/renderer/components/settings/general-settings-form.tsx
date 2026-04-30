@@ -1,5 +1,5 @@
 import { useForm } from 'react-hook-form'
-import { number, object } from 'yup'
+import { boolean, number, object } from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Button, Stack } from '@mui/material'
 import FormSelect from '../forms/components/form-select'
@@ -7,6 +7,7 @@ import { Settings } from '@shared/models/settings.model'
 import { useEffect } from 'react'
 import { LANGUAGES } from '@renderer/i18n/config'
 import { t } from 'i18next'
+import FormCheckbox from '../forms/components/form-checkbox'
 
 export interface GeneralSettingsFormProps {
   onSubmit: (data: any) => void
@@ -14,7 +15,8 @@ export interface GeneralSettingsFormProps {
 }
 
 const generalSettingsSchema = object().shape({
-  language: number()
+  language: number(),
+  rememberLastPosition: boolean()
 })
 
 export function GeneralSettingsForm({ onSubmit, settings }: GeneralSettingsFormProps) {
@@ -27,7 +29,8 @@ export function GeneralSettingsForm({ onSubmit, settings }: GeneralSettingsFormP
     clearErrors
   } = useForm({
     defaultValues: {
-      language: 1
+      language: 1,
+      rememberLastPosition: false
     },
     resolver: yupResolver(generalSettingsSchema)
   })
@@ -36,6 +39,7 @@ export function GeneralSettingsForm({ onSubmit, settings }: GeneralSettingsFormP
     if (settings) {
       const language = LANGUAGES.find((l) => l.inputValue === settings.language)
       setValue('language', language?.id ?? 1)
+      setValue('rememberLastPosition', settings.rememberLastPosition ?? false)
     }
   }, [settings])
 
@@ -58,6 +62,12 @@ export function GeneralSettingsForm({ onSubmit, settings }: GeneralSettingsFormP
           label={t('translation:settings.language')}
           options={LANGUAGES}
         />
+        <FormCheckbox
+          control={control}
+          name="rememberLastPosition"
+          label={t('translation:settings.remember')}
+        />
+
         <Button variant="contained" color="primary" type="submit">
           {t('translation:buttons.save')}
         </Button>

@@ -1,4 +1,4 @@
-import React, { ReactNode, useContext } from 'react'
+import React, { ReactNode, useContext, useMemo } from 'react'
 import {
   Box,
   Divider,
@@ -9,7 +9,7 @@ import {
   styled,
   Typography
 } from '@mui/material'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faAngleDown,
@@ -34,16 +34,20 @@ import useEntityStore from '@renderer/hooks/useEntityStore'
 
 function GamebaseDropDown({ gamebases }: { gamebases: GameBase[] }) {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null)
-  const [selectedIndex, setSelectedIndex] = React.useState<number>()
+  const { pathname } = useLocation()
+
+  const selectedIndex = useMemo(() => {
+    return gamebases.findIndex((gb) => pathname.includes(`/gamebase/${gb.id}`))
+  }, [gamebases, pathname])
+
   const open = Boolean(anchorEl)
+
   const handleOpenMenuClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget)
   }
 
   const handleMenuItemClick = (event: React.MouseEvent<HTMLElement>, index: number) => {
-    setSelectedIndex(index)
     setAnchorEl(null)
-
     useEntityStore.getState().clearStore()
   }
 
@@ -61,7 +65,7 @@ function GamebaseDropDown({ gamebases }: { gamebases: GameBase[] }) {
           aria-expanded={open ? 'true' : undefined}
           onClick={handleOpenMenuClick}
         >
-          {selectedIndex != null ? (
+          {selectedIndex && selectedIndex !== -1 ? (
             <ListItemText primary={gamebases[selectedIndex]?.name} />
           ) : (
             <ListItemText primary={t('translation:gamebase.menuitem_add')} />

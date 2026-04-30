@@ -27,6 +27,7 @@
   "settings": {
     "title": "Settings",
     "language": "Language",
+    "remember": "Remember last selected GameBase and entry",
     "tabs": {
       "general": "General",
       "about": "About"

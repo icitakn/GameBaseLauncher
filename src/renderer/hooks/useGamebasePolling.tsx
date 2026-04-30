@@ -70,7 +70,7 @@ export function useGamebasePolling() {
       // Retry after 5 seconds on error
       timeoutRef.current = setTimeout(poll, 5000)
     }
-  }, [setSettings]) // setSettings as dependency
+  }, [])
 
   useEffect(() => {
     // console.log('Starting gamebase polling')
