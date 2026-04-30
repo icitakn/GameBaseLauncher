@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Button,
   Card,
@@ -24,6 +24,8 @@ import { ColumnPickerDialog, ColumnOption } from '../column-picker/column-picker
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTableColumns } from '@fortawesome/free-solid-svg-icons'
 import { useColumnSelection } from '@renderer/hooks/useColumnSelection'
+import { SettingsContext } from '@renderer/contexts/settings.context'
+import { useLocation, useSearchParams } from 'react-router-dom'
 
 export interface DetailsProps<T> {
   selected: T
@@ -71,12 +73,17 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
   initialColumnKeys
 }: MasterDetailProps<T>) {
   const { selectedGamebase } = useSelectedGamebase()
+  const { settings, setSettings } = useContext(SettingsContext)
   const [selected, setSelected] = useState<T | null>()
+  const [displayedSelected, setDisplayedSelected] = useState<T | null>()
   const [edit, setEdit] = useState<T | null>()
   const [isEditDialogOpen, setEditDialogOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [isColumnPickerOpen, setColumnPickerOpen] = useState(false)
+
+  const { pathname } = useLocation()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const defaultActiveKeys = useMemo<string[]>(
     () =>
@@ -100,6 +107,19 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
 
   const formRef = useRef<FormHandle>(null)
   const forceReload = useRef(false)
+  const [initialEntry, setInitialEntry] = useState<T | null>(null)
+
+  useEffect(() => {
+    if (data.length === 0) return
+    const queryParam = searchParams.get('entry')
+    if (!queryParam || initialEntry) return
+    const entry = data.find((d) => d.id === Number(queryParam))
+    if (entry) {
+      setInitialEntry(entry)
+      setSelected(entry)
+      setTimeout(() => setDisplayedSelected(entry), 500)
+    }
+  }, [data])
 
   useEffect(() => {
     if (!selectedGamebase) return
@@ -144,6 +164,23 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
 
   const { openConfirmDialog } = useConfirmDialog()
   const { deleteEntity } = useEntityStore()
+
+  const handleSelectionChange = (newSelection: T | null) => {
+    if (newSelection && newSelection !== selected) {
+      setSelected(newSelection)
+      setTimeout(() => setDisplayedSelected(newSelection), 0)
+      if (settings?.rememberLastPosition && selectedGamebase) {
+        const updatedSettings = {
+          ...settings,
+          lastPosition: {
+            baseUrl: pathname,
+            entry: newSelection.id!
+          }
+        }
+        window.electron.saveSettings(updatedSettings)
+      }
+    }
+  }
 
   const handleDeleteClick = (sel: T & { id?: number | null }) => {
     openConfirmDialog({
@@ -235,14 +272,15 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
             <DataTable
               data={data}
               columns={tableColumns}
-              onSelectionChange={(sel) => setSelected(sel)}
+              onSelectionChange={handleSelectionChange}
               loading={loading}
+              initialSelected={initialEntry}
             />
           </Stack>
         </Stack>
       </Card>
 
-      {selected && (
+      {displayedSelected && (
         <Stack sx={{ width: 300, minWidth: 300, height: '100%', overflow: 'hidden' }}>
           <Card
             elevation={4}
@@ -257,12 +295,12 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
             }}
           >
             {DetailsPanel ? (
-              <DetailsPanel selectedGamebase={selectedGamebase} selected={selected} />
+              <DetailsPanel selectedGamebase={selectedGamebase} selected={displayedSelected} />
             ) : (
               <SelectedPanel
-                selectedName={selected.name}
+                selectedName={displayedSelected.name}
                 selectedGamebase={selectedGamebase!}
-                selectedId={selected.id!}
+                selectedId={displayedSelected.id!}
                 selectedTable={tableName}
               />
             )}

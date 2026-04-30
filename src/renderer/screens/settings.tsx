@@ -20,6 +20,7 @@ function Settings() {
   const handleSubmit = (data: any) => {
     if (settings) {
       settings.language = LANGUAGES.find((lang) => lang.id === data.language)?.inputValue ?? 'en'
+      settings.rememberLastPosition = data.rememberLastPosition
       window.electron.saveSettings(settings).then(() => {
         setSettings(settings)
         changeLanguage(settings.language).then(() => {

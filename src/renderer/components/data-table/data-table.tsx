@@ -6,9 +6,10 @@ import React, {
   ComponentType,
   CSSProperties,
   ReactElement,
-  ReactNode
+  ReactNode,
+  useRef
 } from 'react'
-import { TableVirtuoso, TableProps, ContextProp } from 'react-virtuoso'
+import { TableVirtuoso, TableProps, ContextProp, VirtuosoHandle } from 'react-virtuoso'
 import * as Tanstack from '@tanstack/react-table'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faFilter, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons'
@@ -20,6 +21,7 @@ export interface DataTableProps<T> {
   onSelectionChange?: (selected: T | null) => void
   loading: boolean
   noHeader?: boolean
+  initialSelected?: T | null
 }
 
 const TableHeader = <T,>({
@@ -105,12 +107,27 @@ export default function DataTable<T>({
   columns,
   onSelectionChange,
   loading,
-  noHeader
+  noHeader,
+  initialSelected
 }: DataTableProps<T>): ReactElement {
+  const didInitRef = useRef(false)
+  const virtuosoRef = useRef<VirtuosoHandle>(null)
   const [rowSelection, setRowSelection] = useState<Tanstack.RowSelectionState>({})
   const [sorting, setSorting] = useState<Tanstack.SortingState>([])
   const [columnFilters, setColumnFilters] = useState<Tanstack.ColumnFiltersState>([])
   const theme = useTheme()
+
+  useEffect(() => {
+    if (!initialSelected || didInitRef.current || data.length === 0) return
+    const idx = data.findIndex((d) => d === initialSelected)
+    if (idx !== -1) {
+      didInitRef.current = true
+      setRowSelection({ [idx]: true })
+      setTimeout(() => {
+        virtuosoRef.current?.scrollToIndex({ index: idx, align: 'center', behavior: 'smooth' })
+      }, 200)
+    }
+  }, [data, initialSelected])
 
   const table = Tanstack.useReactTable<T>({
     data,
@@ -233,6 +250,7 @@ export default function DataTable<T>({
   return (
     <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden', height: '100%' }}>
       <TableVirtuoso
+        ref={virtuosoRef}
         style={{
           height: '100%',
           width: '100%',

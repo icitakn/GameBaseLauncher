@@ -1,5 +1,5 @@
-import { HashRouter } from 'react-router-dom'
-import { ReactElement, useEffect, useState } from 'react'
+import { HashRouter, useNavigate } from 'react-router-dom'
+import { ReactElement, useContext, useEffect, useRef, useState } from 'react'
 import { Settings } from '@shared/models/settings.model'
 import { SettingsContext } from './contexts/settings.context'
 import Router from './router'
@@ -8,6 +8,19 @@ import { useGamebasePolling } from './hooks/useGamebasePolling'
 
 function AppContent(): ReactElement {
   useGamebasePolling()
+  const { settings } = useContext(SettingsContext)
+  const navigate = useNavigate()
+  const hasNavigated = useRef(false)
+
+  useEffect(() => {
+    if (!settings || hasNavigated.current) return
+    hasNavigated.current = true
+
+    const pos = settings.lastPosition
+    if (settings.rememberLastPosition && pos && pos.baseUrl) {
+      navigate(`${pos.baseUrl}?entry=${pos.entry}`)
+    }
+  }, [settings])
 
   return <Router />
 }
