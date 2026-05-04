@@ -208,34 +208,76 @@ export function GamePanel({ selected, selectedGamebase }: GamePanelProps): React
         </Box>
       )}
       {images && images.length > 0 && (
-        <>
+        <Box sx={{ width: '100%', flexShrink: 0 }}>
           <Box
-            component="img"
-            src={IMAGE_BASE64_PREFIX + images[selectedImage]}
-            sx={{ height: '100px', width: '200px' }}
-          />
-          <ImageList
             sx={{
-              width: '200px',
-              height: '75px',
-              border: '1px black solid',
-              gridAutoFlow: 'column',
-              gridAutoColumns: '75px',
-              gridTemplateColumns: 'unset',
-              maxWidth: '200px'
+              width: '100%',
+              aspectRatio: '16 / 10',
+              overflow: 'hidden',
+              borderRadius: '6px',
+              mb: 0.75,
+              bgcolor: '#000',
+              position: 'relative'
             }}
-            cols={0}
           >
-            {images.map((item, index) => (
-              <ImageListItem
-                key={index}
-                sx={{ border: '1px white solid', ':hover': { border: '1px black solid' } }}
-              >
-                <img src={IMAGE_BASE64_PREFIX + item} onClick={() => setSelectedImage(index)} />
-              </ImageListItem>
-            ))}
-          </ImageList>
-        </>
+            <Box
+              component="img"
+              src={IMAGE_BASE64_PREFIX + images[selectedImage]}
+              sx={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                display: 'block',
+                transition: 'opacity 0.2s ease'
+              }}
+            />
+          </Box>
+
+          {images.length > 1 && (
+            <Box
+              sx={{
+                display: 'flex',
+                gap: '4px',
+                overflowX: 'hidden',
+                flexWrap: 'wrap',
+                justifyContent: 'center'
+              }}
+            >
+              {images.map((item, index) => (
+                <Box
+                  key={index}
+                  onClick={() => setSelectedImage(index)}
+                  sx={{
+                    width: '52px',
+                    height: '36px',
+                    flexShrink: 0,
+                    borderRadius: '3px',
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    border: selectedImage === index ? '2px solid' : '2px solid transparent',
+                    borderColor: selectedImage === index ? 'success.main' : 'transparent',
+                    opacity: selectedImage === index ? 1 : 0.55,
+                    transition: 'opacity 0.15s ease, border-color 0.15s ease',
+                    '&:hover': {
+                      opacity: 1
+                    }
+                  }}
+                >
+                  <Box
+                    component="img"
+                    src={IMAGE_BASE64_PREFIX + item}
+                    sx={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      display: 'block'
+                    }}
+                  />
+                </Box>
+              ))}
+            </Box>
+          )}
+        </Box>
       )}
 
       {game && (
