@@ -22,6 +22,7 @@ export interface DataTableProps<T> {
   loading: boolean
   noHeader?: boolean
   initialSelected?: T | null
+  noHorizontalScroll?: boolean
 }
 
 const TableHeader = <T,>({
@@ -108,7 +109,8 @@ export default function DataTable<T>({
   onSelectionChange,
   loading,
   noHeader,
-  initialSelected
+  initialSelected,
+  noHorizontalScroll
 }: DataTableProps<T>): ReactElement {
   const didInitRef = useRef(false)
   const virtuosoRef = useRef<VirtuosoHandle>(null)
@@ -176,7 +178,7 @@ export default function DataTable<T>({
             {...props}
             style={{
               ...style,
-              width: 'max-content',
+              width: noHorizontalScroll ? '100%' : 'max-content',
               minWidth: '100%',
               tableLayout: 'fixed',
               borderCollapse: 'separate',
@@ -185,11 +187,17 @@ export default function DataTable<T>({
           />
         )
       },
-    []
+    [noHorizontalScroll]
   ) as ComponentType<TableProps & ContextProp<unknown>>
 
   const TableRowComponent = React.memo(
-    ({ index, row, theme, ...props }: { index: number; row: any; theme: any } & any) => {
+    ({
+      index,
+      row,
+      theme,
+      noHorizontalScroll,
+      ...props
+    }: { index: number; row: any; theme: any; noHorizontalScroll: boolean } & any) => {
       return (
         <TableRow
           {...props}
@@ -205,12 +213,12 @@ export default function DataTable<T>({
               title={cell.getValue()?.toString()}
               style={{
                 padding: '4px 6px',
-                width: cell.column.getSize(),
-                minWidth: cell.column.getSize(),
-                maxWidth: cell.column.getSize(),
+                width: noHorizontalScroll ? 'auto' : cell.column.getSize(),
+                minWidth: noHorizontalScroll ? 0 : cell.column.getSize(),
+                maxWidth: noHorizontalScroll ? 'none' : cell.column.getSize(),
                 overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap'
+                textOverflow: noHorizontalScroll ? 'unset' : 'ellipsis',
+                whiteSpace: noHorizontalScroll ? 'normal' : 'nowrap'
               }}
             >
               {Tanstack.flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -226,10 +234,18 @@ export default function DataTable<T>({
       Table: TableComponent,
       TableRow: (props: any) => {
         const index = props['data-index']
-        return <TableRowComponent index={index} row={rows[index]} theme={theme} {...props} />
+        return (
+          <TableRowComponent
+            index={index}
+            row={rows[index]}
+            theme={theme}
+            noHorizontalScroll={noHorizontalScroll}
+            {...props}
+          />
+        )
       }
     }),
-    [rows, theme]
+    [rows, theme, noHorizontalScroll]
   )
 
   if (loading) {
@@ -254,7 +270,8 @@ export default function DataTable<T>({
         style={{
           height: '100%',
           width: '100%',
-          boxSizing: 'border-box'
+          boxSizing: 'border-box',
+          overflowX: noHorizontalScroll ? 'hidden' : 'auto'
         }}
         totalCount={rows.length}
         data={rows}

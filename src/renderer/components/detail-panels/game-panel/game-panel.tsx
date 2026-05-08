@@ -27,7 +27,7 @@ import {
 import { t } from 'i18next'
 import { ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'react-toastify'
-import { UNDEFINED_YEARS } from '@shared/consts'
+import { IMAGE_BASE64_PREFIX, UNDEFINED_YEARS } from '@shared/consts'
 import useEntityStore from '@renderer/hooks/useEntityStore'
 import { GameBase } from '@shared/models/settings.model'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -36,9 +36,6 @@ import { TabPanel } from '@renderer/components/common/tab-panel'
 import { UUID } from 'crypto'
 import { ExtraDialog } from '@renderer/components/extra-dialog/extra-dialog'
 import { ExtraFileResult } from '@shared/types/file.types'
-import path from 'path'
-
-const IMAGE_BASE64_PREFIX = 'data:image/png;base64, '
 
 export interface GamePanelProps {
   selected?: GameDTO | null

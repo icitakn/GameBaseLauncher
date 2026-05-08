@@ -122,7 +122,13 @@ export function SelectedPanel({
           height: '100%'
         }}
       >
-        <DataTable data={games} columns={cols} loading={loading} noHeader={true} />
+        <DataTable
+          data={games}
+          columns={cols}
+          loading={loading}
+          noHeader={true}
+          noHorizontalScroll={true}
+        />
       </Box>
     </Box>
   )

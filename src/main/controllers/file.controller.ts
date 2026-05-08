@@ -33,6 +33,18 @@ export const registerFileController = () => {
     return checkImportFile(filename)
   })
 
+  ipcMain.handle('file:loadPhotoByPath', async (_, imgpath: string, gamebaseId: string) => {
+    const settings = getSettings()
+    const gamebase = settings.gamebases.find((gb) => gb.id === gamebaseId)
+
+    if (!gamebase || !gamebase.folders || !gamebase.folders.photos) {
+      throw new Error('Photo folder not set!', { cause: 1 })
+    }
+
+    const fullpath = path.join(gamebase.folders.photos, imgpath)
+    return await encodeImageToBase64(fullpath)
+  })
+
   ipcMain.handle('file:loadImages', async (_, game: GameDTO, gamebaseId: string) => {
     if (game?.scrnshotFilename) {
       const settings = getSettings()

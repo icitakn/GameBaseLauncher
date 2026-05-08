@@ -125,6 +125,11 @@ export function getOrCreateSettings(): Settings {
     stats: {
       gamesPlayed: [],
       musicListenedTo: []
+    },
+    rememberLastPosition: false,
+    lastPosition: {
+      baseUrl: '',
+      entry: 0
     }
   }
 
