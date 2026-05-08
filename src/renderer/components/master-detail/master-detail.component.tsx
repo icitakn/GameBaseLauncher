@@ -51,7 +51,7 @@ export interface MasterDetailProps<T> {
   availableColumns?: ColumnOption<T>[]
   DetailsPanel?: React.ComponentType<{
     selected?: T | null
-    selectedGamebase?: GameBase
+    selectedGamebase: GameBase
   }>
   EditForm: React.ForwardRefExoticComponent<EditFormProps<T> & React.RefAttributes<FormHandle>>
   createNew: () => T
@@ -108,6 +108,8 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
   const formRef = useRef<FormHandle>(null)
   const forceReload = useRef(false)
   const [initialEntry, setInitialEntry] = useState<T | null>(null)
+  const { openConfirmDialog } = useConfirmDialog()
+  const { deleteEntity } = useEntityStore()
 
   useEffect(() => {
     if (data.length === 0) return
@@ -133,6 +135,8 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
   useEffect(() => {
     setEditDialogOpen(edit != null)
   }, [edit])
+
+  if (!selectedGamebase) return <></>
 
   const handleColumnChange = async (keys: string[]) => {
     forceReload.current = true
@@ -161,9 +165,6 @@ export function MasterDetail<T extends { id?: number | null; name?: string }>({
     setEditDialogOpen(false)
     setEdit(undefined)
   }
-
-  const { openConfirmDialog } = useConfirmDialog()
-  const { deleteEntity } = useEntityStore()
 
   const handleSelectionChange = (newSelection: T | null) => {
     if (newSelection && newSelection !== selected) {

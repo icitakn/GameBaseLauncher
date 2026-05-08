@@ -27,7 +27,7 @@ import {
 import { t } from 'i18next'
 import { ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'react-toastify'
-import { UNDEFINED_YEARS } from '@shared/consts'
+import { IMAGE_BASE64_PREFIX, UNDEFINED_YEARS } from '@shared/consts'
 import useEntityStore from '@renderer/hooks/useEntityStore'
 import { GameBase } from '@shared/models/settings.model'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -36,9 +36,6 @@ import { TabPanel } from '@renderer/components/common/tab-panel'
 import { UUID } from 'crypto'
 import { ExtraDialog } from '@renderer/components/extra-dialog/extra-dialog'
 import { ExtraFileResult } from '@shared/types/file.types'
-import path from 'path'
-
-const IMAGE_BASE64_PREFIX = 'data:image/png;base64, '
 
 export interface GamePanelProps {
   selected?: GameDTO | null
@@ -62,6 +59,30 @@ export function GamePanel({ selected, selectedGamebase }: GamePanelProps): React
   const [extraFile, setExtraFile] = useState<ExtraFileResult | null>(null)
   const [extraDialogOpen, setExtraDialogOpen] = useState(false)
   const [loadingExtraFile, setLoadingExtraFile] = useState(false)
+
+  useEffect(() => {
+    const style = document.createElement('style')
+    style.innerHTML = `
+    .thumbnail-strip::-webkit-scrollbar {
+      height: 6px;
+    }
+    .thumbnail-strip::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.12);
+      border-radius: 3px;
+    }
+    .thumbnail-strip::-webkit-scrollbar-thumb {
+      background: rgba(0,0,0,0.4);
+      border-radius: 3px;
+    }
+    .thumbnail-strip::-webkit-scrollbar-thumb:hover {
+      background: rgba(0,0,0,0.65);
+    }
+  `
+    document.head.appendChild(style)
+    return () => {
+      document.head.removeChild(style)
+    }
+  }, [])
 
   const loadXtra = async (id: number, gamebaseId: UUID) => {
     setLoadingExtras(true)
@@ -235,12 +256,13 @@ export function GamePanel({ selected, selectedGamebase }: GamePanelProps): React
 
           {images.length > 1 && (
             <Box
+              className="thumbnail-strip"
               sx={{
                 display: 'flex',
                 gap: '4px',
-                overflowX: 'hidden',
-                flexWrap: 'wrap',
-                justifyContent: 'center'
+                overflowX: 'auto',
+                flexWrap: 'nowrap',
+                mt: '4px'
               }}
             >
               {images.map((item, index) => (
@@ -260,7 +282,8 @@ export function GamePanel({ selected, selectedGamebase }: GamePanelProps): React
                     transition: 'opacity 0.15s ease, border-color 0.15s ease',
                     '&:hover': {
                       opacity: 1
-                    }
+                    },
+                    mb: '2px'
                   }}
                 >
                   <Box

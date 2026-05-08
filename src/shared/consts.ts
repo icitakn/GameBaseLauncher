@@ -1,5 +1,7 @@
 import { IdLabelObject } from './models/form-schemes.model'
 
+export const IMAGE_BASE64_PREFIX = 'data:image/png;base64, '
+
 export const SEPARATOR = window.navigator.platform.startsWith('Win') ? '\\' : '/'
 
 export const YEARS = Array(130)

@@ -268,5 +268,10 @@
         "url": "Das Extra wird als URL behandelt und in einem externen Browser angezeigt."
       }
     }
+  },
+  "musician": {
+    "messages": {
+      "photos": "Um Fotos sehen zu können, trage bitte einen Fotoordner in den Gamebase-Einstellungen ein!"
+    }
   }
 }

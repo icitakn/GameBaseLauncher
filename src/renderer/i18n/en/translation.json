@@ -273,5 +273,10 @@
         "url": "The extra is treated as a URL and is opened in a web browser."
       }
     }
+  },
+  "musician": {
+    "messages": {
+      "photos": "To view photos, set the photo folder in the gamebase settings!"
+    }
   }
 }

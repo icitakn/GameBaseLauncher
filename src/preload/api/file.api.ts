@@ -6,6 +6,8 @@ export const fileApi = {
   getOrCreateSettings: () => ipcRenderer.invoke('file:getOrCreateSettings'),
   checkImportFile: (filename: string) => ipcRenderer.invoke('file:checkImportFile', filename),
 
+  loadPhotoByPath: (imgpath: string, gamebaseId: string) =>
+    ipcRenderer.invoke('file:loadPhotoByPath', imgpath, gamebaseId),
   loadImages: (game: GameDTO, gamebaseId: string) =>
     ipcRenderer.invoke('file:loadImages', game, gamebaseId),
   readDir: (path: string) => ipcRenderer.invoke('file:readDir', path),

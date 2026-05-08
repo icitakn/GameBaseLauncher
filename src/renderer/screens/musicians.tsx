@@ -4,6 +4,7 @@ import { MusicianForm } from '../components/forms/musician-form'
 import useEntityStore from '../hooks/useEntityStore'
 import { MusicianDTO } from '@shared/models/form-schemes.model'
 import { t } from 'i18next'
+import { MusicianPanel } from '@renderer/components/detail-panels/musician-panel/musician-panel'
 
 const columnHelper = createColumnHelper<MusicianDTO>()
 const columns = [
@@ -36,6 +37,7 @@ export function Musicians() {
       tableName="Musician"
       title={t('translation:menu.musicians')}
       EditForm={MusicianForm}
+      DetailsPanel={MusicianPanel}
       createNew={createNew}
       data={musicianStore}
       loadData={loadMusicians}
