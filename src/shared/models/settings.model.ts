@@ -24,6 +24,11 @@ export type GameBase = {
   musicplayer?: string | null
   state?: string | null
   columnSelections?: Record<string, string[]>
+  repacking?: {
+    repackGames?: boolean
+    askBefore?: boolean
+    notifyAfter?: boolean
+  }
 }
 
 export type GamePlayed = {

@@ -14,6 +14,7 @@ import { SEPARATOR } from '@shared/consts'
 import FormTextField from '../forms/components/form-textfield'
 import { UUID } from 'crypto'
 import { TabPanel } from '../common/tab-panel'
+import FormCheckbox from '../forms/components/form-checkbox'
 
 export interface GamebaseFormProps {
   onSubmit: (gamebase: GameBase) => void
@@ -39,7 +40,11 @@ export function GamebaseForm({ onSubmit, gamebase }: GamebaseFormProps) {
         photos: '',
         extras: ''
       },
-      gemusScript: ''
+      repacking: {
+        repackGames: false,
+        askBefore: false,
+        notifyAfter: false
+      }
     },
     resolver: yupResolver(gamebaseSchema)
   })
@@ -64,6 +69,11 @@ export function GamebaseForm({ onSubmit, gamebase }: GamebaseFormProps) {
           music: gamebase.folders?.music,
           photos: gamebase.folders?.photos,
           extras: gamebase.folders?.extras
+        },
+        repacking: {
+          repackGames: gamebase.repacking?.repackGames ?? false,
+          askBefore: gamebase.repacking?.askBefore ?? false,
+          notifyAfter: gamebase.repacking?.notifyAfter ?? false
         }
       })
     }
@@ -183,6 +193,7 @@ export function GamebaseForm({ onSubmit, gamebase }: GamebaseFormProps) {
           <Tab label={t('translation:gamebase.tabs.general')} value={0} />
           <Tab label={t('translation:gamebase.tabs.external_apps')} value={1} />
           <Tab label={t('translation:gamebase.tabs.folders')} value={2} />
+          <Tab label={t('translation:gamebase.tabs.games')} value={3} />
         </Tabs>
 
         <TabPanel value={selectedTab} index={0}>
@@ -422,6 +433,26 @@ export function GamebaseForm({ onSubmit, gamebase }: GamebaseFormProps) {
                 <FontAwesomeIcon icon={faFolder}></FontAwesomeIcon>
               </Button>
             </Stack>
+          </Stack>
+        </TabPanel>
+
+        <TabPanel value={selectedTab} index={3}>
+          <Stack spacing={2} sx={{ display: 'flex', flexDirection: 'column' }}>
+            <FormCheckbox
+              control={control}
+              name="repacking.repackGames"
+              label={t('translation:gamebase.form_fields.repack_games')}
+            />
+            <FormCheckbox
+              control={control}
+              name="repacking.askBefore"
+              label={t('translation:gamebase.form_fields.ask_before')}
+            />
+            <FormCheckbox
+              control={control}
+              name="repacking.notifyAfter"
+              label={t('translation:gamebase.form_fields.notify_after')}
+            />
           </Stack>
         </TabPanel>
 

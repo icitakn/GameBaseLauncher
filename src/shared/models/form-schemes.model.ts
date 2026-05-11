@@ -40,7 +40,11 @@ export const gamebaseSchema = object().shape({
     photos: string().nullable(),
     extras: string().nullable()
   }),
-  gemusScript: string().nullable()
+  repacking: object({
+    repackGames: bool().default(false),
+    askBefore: bool().default(false),
+    notifyAfter: bool().default(false)
+  })
 })
 
 export const baseSchema = object().shape({

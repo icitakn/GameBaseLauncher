@@ -78,7 +78,10 @@
       "music_folder": "Musikordner",
       "photos_folder": "Fotoordner",
       "extras_folder": "Extrasordner",
-      "gemus_file": "GEMUS Skript Datei"
+      "gemus_file": "GEMUS Skript Datei",
+      "repack_games": "Packe entpackte Spiele nach dem Spielen (falls verändert)",
+      "ask_before": "Frage vor dem Packen",
+      "notify_after": "Benachrichtige mich nach erfolgreichem Packen"
     },
     "errors": {
       "name_required": "Bitte gib einen Namen ein.",
@@ -99,7 +102,8 @@
       "languages": "Sprachen",
       "difficulties": "Schwierigkeitsgrade",
       "rarities": "Raritäten",
-      "licenses": "Lizenzen"
+      "licenses": "Lizenzen",
+      "games": "Spiele"
     }
   },
   "game": {
