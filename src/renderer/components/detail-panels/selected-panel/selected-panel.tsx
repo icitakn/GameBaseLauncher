@@ -8,9 +8,14 @@ import DataTable from '../../data-table/data-table'
 import { t } from 'i18next'
 import { GameDTO } from '@shared/models/form-schemes.model'
 import { toast } from 'react-toastify'
+import { useGameLauncher } from '@renderer/hooks/useGameLauncher'
+import { UUID } from 'crypto'
 
 const columnHelper = createColumnHelper<GameDTO>()
-const columns = (gamebase: GameBase) => [
+const columns = (
+  gamebase: GameBase,
+  launchGame: (gamebaseId: UUID, gameId: number, gameName: string, emulatorId?: string) => void
+) => [
   columnHelper.accessor('id', { header: 'ID' }),
   columnHelper.accessor('name', { header: 'NAME' }),
   columnHelper.display({
@@ -29,7 +34,9 @@ const columns = (gamebase: GameBase) => [
               <FontAwesomeIcon
                 icon={faGamepad}
                 fontSize="2.2em"
-                onClick={() => execute(gamebase, props.row.original)}
+                onClick={() =>
+                  launchGame(gamebase.id, props.row.original.id!, props.row.original.name)
+                }
               />
             </Box>
           )}
@@ -38,16 +45,6 @@ const columns = (gamebase: GameBase) => [
     }
   })
 ]
-
-const execute = async (gamebase: GameBase, game: GameDTO) => {
-  if (game && game.id) {
-    try {
-      await window.electron.execute(gamebase.id, game.id)
-    } catch (error) {
-      toast.error(t('common.error_occured') + error)
-    }
-  }
-}
 
 export interface SelectedPanelProps {
   selectedName?: string
@@ -69,7 +66,9 @@ export function SelectedPanel({
     setValue(newValue)
   }
 
-  const cols = useMemo(() => columns(selectedGamebase), [selectedGamebase])
+  const { launchGame } = useGameLauncher()
+
+  const cols = useMemo(() => columns(selectedGamebase, launchGame), [selectedGamebase])
 
   useEffect(() => {
     if (selectedGamebase) {

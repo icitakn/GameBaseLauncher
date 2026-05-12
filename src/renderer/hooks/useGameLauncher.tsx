@@ -9,7 +9,7 @@ export function useGameLauncher() {
   const { openConfirmDialog } = useConfirmDialog()
 
   const launchGame = useCallback(
-    async (gamebaseId: UUID, gameId: number, gameName: string, emulatorId: string | undefined) => {
+    async (gamebaseId: UUID, gameId: number, gameName: string, emulatorId?: string) => {
       setIsLoading(true)
       openConfirmDialog({
         mode: 'okonly',
