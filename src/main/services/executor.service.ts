@@ -15,6 +15,17 @@ const EXECUTABLE_EXTENSIONS: Record<string, string[]> = {
   linux: ['.sh', '.AppImage', '']
 }
 
+function spawnAndWait(executable: string, args: string[]): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const proc = child.spawn(executable, args, { stdio: 'ignore' })
+    proc.on('close', (code) => {
+      if (code === 0 || code !== null) resolve()
+      else reject(new Error(`Process exited with code ${code}`))
+    })
+    proc.on('error', reject)
+  })
+}
+
 function isExecutable(filePath: string): boolean {
   const platform = os.platform()
   const ext = path.extname(filePath).toLowerCase()
@@ -35,7 +46,7 @@ function isExecutable(filePath: string): boolean {
   return true
 }
 
-export function execute(gamebase: GameBase, game: Game, emulatorId?: string) {
+export async function execute(gamebase: GameBase, game: Game, emulatorId?: string) {
   if (!gamebase || !gamebase.folders || !gamebase.folders.games) {
     log.info('Games folder is not set!')
   }
@@ -129,31 +140,36 @@ export function execute(gamebase: GameBase, game: Game, emulatorId?: string) {
     throw new Error(msg)
   }
 
-  child.execFile(
-    emulator?.path || gamepath,
-    emulator?.path ? [gamepath] : [],
-    (error: child.ExecFileException | null, _stdout: string, _stderr: string) => {
-      const settings = getSettings()
+  const emulatorPath = emulator?.path || gamepath
+  const args = emulator?.path ? [gamepath] : []
+  await spawnAndWait(emulatorPath, args)
 
-      const alreadyPlayedIdx = settings.stats.gamesPlayed.findIndex(
-        (played) => played.id === game.id
-      )
-      if (alreadyPlayedIdx > 0) {
-        const playtime =
-          new Date().getTime() - settings.stats.gamesPlayed[alreadyPlayedIdx].lastPlayedAtMs
-        settings.stats.gamesPlayed[alreadyPlayedIdx].playtimeInMs += playtime
-        saveSettings(settings)
-      }
+  // child.execFile(
+  //   emulator?.path || gamepath,
+  //   emulator?.path ? [gamepath] : [],
+  //   (error: child.ExecFileException | null, _stdout: string, _stderr: string) => {
+  //     const settings = getSettings()
 
-      if (error) {
-        log.error('An error occured while executing game ' + game.name + ': ' + error)
-        log.error('Game info: ' + JSON.stringify(game))
-        log.error('Path: ' + path)
-        throw new Error('An error occured while executing game ' + game.name + ': ' + error)
-      }
-    }
-  )
+  //     const alreadyPlayedIdx = settings.stats.gamesPlayed.findIndex(
+  //       (played) => played.id === game.id
+  //     )
+  //     if (alreadyPlayedIdx > 0) {
+  //       const playtime =
+  //         new Date().getTime() - settings.stats.gamesPlayed[alreadyPlayedIdx].lastPlayedAtMs
+  //       settings.stats.gamesPlayed[alreadyPlayedIdx].playtimeInMs += playtime
+  //       saveSettings(settings)
+  //     }
 
+  //     if (error) {
+  //       log.error('An error occured while executing game ' + game.name + ': ' + error)
+  //       log.error('Game info: ' + JSON.stringify(game))
+  //       log.error('Path: ' + path)
+  //       throw new Error('An error occured while executing game ' + game.name + ': ' + error)
+  //     }
+  //   }
+  // )
+
+  console.log('123')
   recordGamePlayed(gamebase, game, emulator?.id)
 }
 

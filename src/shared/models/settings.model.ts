@@ -67,3 +67,7 @@ export type Settings = {
 export type ImportFileCheckResult = {
   numberOfGames: number
 }
+
+export type ExecutionResult = {
+  fileModified: boolean
+}

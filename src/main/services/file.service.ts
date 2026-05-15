@@ -5,6 +5,7 @@ import { Settings } from '../../shared/models/settings.model'
 import path from 'path'
 import { app, shell } from 'electron'
 import { ExtraFileResult } from '@shared/types/file.types'
+import { createHash } from 'crypto'
 
 const CONFIG_FILE = 'config.json'
 
@@ -269,5 +270,14 @@ export function readExtraFile(filePath: string, extraFolder: string): ExtraFileR
 
     default:
       throw new Error(`Unsupported file type: ${ext}`)
+  }
+}
+
+export function fileHash(filePath: string): string | null {
+  try {
+    const buf = readFileSync(filePath)
+    return createHash('sha256').update(buf).digest('hex')
+  } catch {
+    return null
   }
 }

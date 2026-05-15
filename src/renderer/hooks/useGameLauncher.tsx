@@ -17,7 +17,14 @@ export function useGameLauncher() {
         title: 'Starting game'
       })
       try {
-        await window.electron.execute(gamebaseId, gameId, emulatorId)
+        const result = await window.electron.execute(gamebaseId, gameId, emulatorId)
+        if (result.fileModified) {
+          openConfirmDialog({
+            mode: 'yesno',
+            message: 'Do you want to repack the game?',
+            title: 'Repacking'
+          })
+        }
       } catch (error) {
         toast.error(t('common.error_occured') + error)
       } finally {
