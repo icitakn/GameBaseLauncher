@@ -107,7 +107,9 @@ export async function execute(gamebase: GameBase, game: Game, emulatorId?: strin
     }
 
     try {
+      const startTime = new Date().getTime()
       const scriptResult = executeGemusScript(scriptContent, ctx, resolvedEmulator)
+      const playTime = new Date().getTime() - startTime
 
       if (!scriptResult.shouldRun) {
         log.info(`[GEMUS] Script decided not to run the game (shouldRun=false)`)
@@ -115,14 +117,14 @@ export async function execute(gamebase: GameBase, game: Game, emulatorId?: strin
           log.info(`[GEMUS] Exit message: ${scriptResult.exitMessage}`)
         }
         // Still record stats so the game shows up as attempted
-        recordGamePlayed(gamebase, game)
+        recordGamePlayed({ gamebase, game, emulatorId: emulator?.id, playTime })
         return
       }
 
       // Stats are recorded after the emulator finishes;
       // GEMUS already calls spawnProcess internally in Run_Emulator() /
       // Run_GameFile(). We still track stats here.
-      recordGamePlayed(gamebase, game)
+      recordGamePlayed({ gamebase, game, emulatorId: emulator?.id, playTime })
     } catch (err) {
       log.error(`[GEMUS] Script execution failed for "${game.name}": ${err}`)
       throw err
@@ -142,35 +144,11 @@ export async function execute(gamebase: GameBase, game: Game, emulatorId?: strin
 
   const emulatorPath = emulator?.path || gamepath
   const args = emulator?.path ? [gamepath] : []
+  const startTime = new Date().getTime()
   await spawnAndWait(emulatorPath, args)
+  const playTime = new Date().getTime() - startTime
 
-  // child.execFile(
-  //   emulator?.path || gamepath,
-  //   emulator?.path ? [gamepath] : [],
-  //   (error: child.ExecFileException | null, _stdout: string, _stderr: string) => {
-  //     const settings = getSettings()
-
-  //     const alreadyPlayedIdx = settings.stats.gamesPlayed.findIndex(
-  //       (played) => played.id === game.id
-  //     )
-  //     if (alreadyPlayedIdx > 0) {
-  //       const playtime =
-  //         new Date().getTime() - settings.stats.gamesPlayed[alreadyPlayedIdx].lastPlayedAtMs
-  //       settings.stats.gamesPlayed[alreadyPlayedIdx].playtimeInMs += playtime
-  //       saveSettings(settings)
-  //     }
-
-  //     if (error) {
-  //       log.error('An error occured while executing game ' + game.name + ': ' + error)
-  //       log.error('Game info: ' + JSON.stringify(game))
-  //       log.error('Path: ' + path)
-  //       throw new Error('An error occured while executing game ' + game.name + ': ' + error)
-  //     }
-  //   }
-  // )
-
-  console.log('123')
-  recordGamePlayed(gamebase, game, emulator?.id)
+  recordGamePlayed({ gamebase, game, emulatorId: emulator?.id, playTime })
 }
 
 // ---------------------------------------------------------------------------
@@ -184,7 +162,17 @@ const getFullLabel = (genre: Genre): string => {
   return parentLabel ? parentLabel + ' - ' + name : name
 }
 
-function recordGamePlayed(gamebase: GameBase, game: Game, emulatorId?: string): void {
+function recordGamePlayed({
+  gamebase,
+  game,
+  emulatorId,
+  playTime
+}: {
+  gamebase: GameBase
+  game: Game
+  emulatorId?: string
+  playTime: number
+}): void {
   if (!game.id) return
 
   const settings = getSettings()
@@ -195,6 +183,7 @@ function recordGamePlayed(gamebase: GameBase, game: Game, emulatorId?: string): 
   const alreadyPlayedIdx = settings.stats.gamesPlayed.findIndex((played) => played.id === game.id)
   if (alreadyPlayedIdx >= 0) {
     settings.stats.gamesPlayed[alreadyPlayedIdx].lastPlayedAtMs = new Date().getTime()
+    settings.stats.gamesPlayed[alreadyPlayedIdx].playtimeInMs += playTime
   } else {
     settings.stats.gamesPlayed = [
       ...settings.stats.gamesPlayed,
@@ -205,7 +194,7 @@ function recordGamePlayed(gamebase: GameBase, game: Game, emulatorId?: string): 
         genre: game.genre ? getFullLabel(game.genre) : 'Unknown',
         lastPlayedAtMs: new Date().getTime(),
         name: game.name || 'Unknown',
-        playtimeInMs: 0,
+        playtimeInMs: playTime,
         rating: game.rating ?? 0
       }
     ]
