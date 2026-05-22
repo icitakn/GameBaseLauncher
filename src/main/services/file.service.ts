@@ -25,6 +25,39 @@ export function extract(filename: string, extractTo: string) {
   c.extractAllTo(extractTo)
 }
 
+export function repack(extractedFolder: string, originalZipPath: string): void {
+  const normalizedZipPath = normalizePath(originalZipPath)
+  const normalizedFolder = normalizePath(extractedFolder)
+
+  console.log('repacking', normalizedFolder, 'into', normalizedZipPath)
+
+  if (!existsSync(normalizedFolder)) {
+    throw new Error(`Extracted folder not found: ${normalizedFolder}`)
+  }
+
+  const zip = new AdmZip()
+
+  const addFolderRecursive = (folderPath: string, zipBasePath: string) => {
+    const entries = readdirSync(folderPath, { withFileTypes: true })
+
+    for (const entry of entries) {
+      const fullPath = path.join(folderPath, entry.name)
+      const zipEntryPath = zipBasePath ? path.join(zipBasePath, entry.name) : entry.name
+
+      if (entry.isDirectory()) {
+        addFolderRecursive(fullPath, zipEntryPath)
+      } else {
+        zip.addFile(zipEntryPath.replace(/\\/g, '/'), readFileSync(fullPath))
+      }
+    }
+  }
+
+  addFolderRecursive(normalizedFolder, '')
+  zip.writeZip(normalizedZipPath)
+
+  console.log('repack complete:', normalizedZipPath)
+}
+
 export function listFilesInZip(filename: string) {
   const c = new AdmZip(normalizePath(filename))
   const entries = c.getEntries()

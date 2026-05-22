@@ -8,7 +8,8 @@ import {
   listFilesInZip,
   readC64FromZip,
   readDir,
-  readExtraFile
+  readExtraFile,
+  repack
 } from '../services/file.service'
 import { checkImportFile } from '../services/database.service'
 import { GameDTO } from '@shared/models/form-schemes.model'
@@ -192,4 +193,27 @@ export const registerFileController = () => {
       return fileResult
     }
   )
+
+  ipcMain.handle('file:repackGame', async (_, game: GameDTO, gamebaseId: string): Promise<void> => {
+    const settings = getSettings()
+    const gamebase = settings.gamebases.find((gb) => gb.id === gamebaseId)
+
+    if (!gamebase?.folders?.games) {
+      throw new Error('Games folder not set!', { cause: 1 })
+    }
+    if (!gamebase?.folders?.extractTo) {
+      throw new Error('ExtractTo folder not set!', { cause: 1 })
+    }
+    if (!game.filename) {
+      throw new Error('Game has no filename!', { cause: 1 })
+    }
+
+    const originalZipPath = path.join(gamebase.folders.games, game.filename)
+    const extractedFolder = path.join(
+      gamebase.folders.extractTo,
+      path.basename(game.filename, path.extname(game.filename))
+    )
+
+    repack(extractedFolder, originalZipPath)
+  })
 }

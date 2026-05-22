@@ -23,6 +23,9 @@ export function useGameLauncher() {
             mode: 'yesno',
             message: 'Do you want to repack the game?',
             title: 'Repacking'
+          }).then(async (result) => {
+            if (result) {
+            }
           })
         }
       } catch (error) {

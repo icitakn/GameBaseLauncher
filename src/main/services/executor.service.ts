@@ -1,7 +1,7 @@
-import { GameBase } from '@shared/models/settings.model'
+import { ExecutionResult, GameBase } from '@shared/models/settings.model'
 import { Game } from '../entities/game.entity'
 import { Genre } from '../entities/genre.entity'
-import { extract, getSettings, normalizePath, saveSettings } from './file.service'
+import { extract, fileHash, getSettings, normalizePath, saveSettings } from './file.service'
 import { executeGemusScript, loadGemusScript, parseKvPairs, GemusContext } from './gemus.service'
 import * as child from 'child_process'
 import * as fs from 'fs'
@@ -46,7 +46,11 @@ function isExecutable(filePath: string): boolean {
   return true
 }
 
-export async function execute(gamebase: GameBase, game: Game, emulatorId?: string) {
+export async function execute(
+  gamebase: GameBase,
+  game: Game,
+  emulatorId?: string
+): Promise<ExecutionResult> {
   if (!gamebase || !gamebase.folders || !gamebase.folders.games) {
     log.info('Games folder is not set!')
   }
@@ -106,10 +110,14 @@ export async function execute(gamebase: GameBase, game: Game, emulatorId?: strin
       kvPairs
     }
 
+    const hashBefore = fileHash(gamepath)
+    let hashAfter
     try {
       const startTime = new Date().getTime()
+
       const scriptResult = executeGemusScript(scriptContent, ctx, resolvedEmulator)
       const playTime = new Date().getTime() - startTime
+      hashAfter = fileHash(gamepath)
 
       if (!scriptResult.shouldRun) {
         log.info(`[GEMUS] Script decided not to run the game (shouldRun=false)`)
@@ -118,7 +126,7 @@ export async function execute(gamebase: GameBase, game: Game, emulatorId?: strin
         }
         // Still record stats so the game shows up as attempted
         recordGamePlayed({ gamebase, game, emulatorId: emulator?.id, playTime })
-        return
+        return { fileModified: hashAfter !== hashBefore }
       }
 
       // Stats are recorded after the emulator finishes;
@@ -130,7 +138,7 @@ export async function execute(gamebase: GameBase, game: Game, emulatorId?: strin
       throw err
     }
 
-    return
+    return { fileModified: hashAfter ? hashAfter !== hashBefore : false }
   }
 
   // -------------------------------------------------------------------------
@@ -145,10 +153,17 @@ export async function execute(gamebase: GameBase, game: Game, emulatorId?: strin
   const emulatorPath = emulator?.path || gamepath
   const args = emulator?.path ? [gamepath] : []
   const startTime = new Date().getTime()
+  const hashBefore = fileHash(gamepath)
+
   await spawnAndWait(emulatorPath, args)
+
+  const hashAfter = fileHash(gamepath)
+
   const playTime = new Date().getTime() - startTime
 
   recordGamePlayed({ gamebase, game, emulatorId: emulator?.id, playTime })
+
+  return { fileModified: hashAfter !== hashBefore }
 }
 
 // ---------------------------------------------------------------------------

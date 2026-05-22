@@ -18,12 +18,12 @@ export const registerExecuteController = () => {
           .findOne(Game, [gameId], { populate: ['genre', 'genre.parent'] })
 
         if (game) {
-          await execute(gamebase, game, emulatorId)
+          return await execute(gamebase, game, emulatorId)
         }
       }
 
       const result: ExecutionResult = {
-        fileModified: true
+        fileModified: false
       }
 
       return result
