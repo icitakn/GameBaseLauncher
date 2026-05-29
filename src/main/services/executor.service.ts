@@ -66,8 +66,10 @@ export async function execute(
 
   if (normalizedFilename.endsWith('.zip')) {
     if (gamebase?.folders?.extractTo && game.fileToRun) {
-      extract(gamepath, gamebase.folders.extractTo)
-      gamepath = path.join(gamebase.folders.extractTo, game.fileToRun)
+      const folderName = path.basename(gamepath, path.extname(gamepath))
+      const targetFolder = path.join(gamebase.folders.extractTo, folderName)
+      extract(gamepath, targetFolder)
+      gamepath = path.join(targetFolder, game.fileToRun)
     } else {
       throw new Error(
         'Zip file found but no extractTo folder or the game has no file to run after unzipping'
