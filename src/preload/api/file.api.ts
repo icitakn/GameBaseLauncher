@@ -21,6 +21,6 @@ export const fileApi = {
     gamebaseId: string
   ): Promise<ExtraFileResult> =>
     ipcRenderer.invoke('file:readExtra', filePath, fileToRun, extraFolder, gamebaseId),
-  repackGame: (game: GameDTO, gamebaseId: string) =>
+  repackGame: (game: number, gamebaseId: string) =>
     ipcRenderer.invoke('file:repackGame', game, gamebaseId)
 }

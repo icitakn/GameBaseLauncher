@@ -157,6 +157,14 @@
     "pal_ntsc": "PAL/NTSC",
     "messages": {
       "screenshots": "Um Screenshots sehen zu können, trage bitte einen Bilderordner in den Gamebase-Einstellungen ein!"
+    },
+    "launch": {
+      "title": "Spiel starten",
+      "message": "Starte ",
+      "repack": "Möchtest du das Spiel neupacken?",
+      "repack_title": "Neupacken",
+      "repack_success": "Das Neupacken war erfolgreich",
+      "repack_failed": "Das Neupacken ist fehlgeschlagen"
     }
   },
   "forms": {
