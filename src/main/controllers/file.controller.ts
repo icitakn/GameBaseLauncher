@@ -22,8 +22,10 @@ import log from 'electron-log'
 import { ExtraFileResult } from '@shared/types/file.types'
 import { execute } from '../services/executor.service'
 import { GameBase } from '@shared/models/settings.model'
-import { Game } from '@main/entities/game.entity'
+import { Game } from '../entities/game.entity'
 import { GetReferenceFunction } from '@shared/types/database.types'
+import { loadGamebase } from './gamebase.controller'
+import { UUID } from 'crypto'
 
 export const registerFileController = () => {
   ipcMain.handle('file:getOrCreateSettings', async () => {
@@ -194,26 +196,38 @@ export const registerFileController = () => {
     }
   )
 
-  ipcMain.handle('file:repackGame', async (_, game: GameDTO, gamebaseId: string): Promise<void> => {
-    const settings = getSettings()
-    const gamebase = settings.gamebases.find((gb) => gb.id === gamebaseId)
+  ipcMain.handle(
+    'file:repackGame',
+    async (_, gameId: number, gamebaseId: UUID): Promise<boolean> => {
+      const { db, gamebase } = await loadGamebase(gamebaseId)
 
-    if (!gamebase?.folders?.games) {
-      throw new Error('Games folder not set!', { cause: 1 })
-    }
-    if (!gamebase?.folders?.extractTo) {
-      throw new Error('ExtractTo folder not set!', { cause: 1 })
-    }
-    if (!game.filename) {
-      throw new Error('Game has no filename!', { cause: 1 })
-    }
+      if (gamebase) {
+        const game = await db.em.fork().findOne(Game, [gameId])
 
-    const originalZipPath = path.join(gamebase.folders.games, game.filename)
-    const extractedFolder = path.join(
-      gamebase.folders.extractTo,
-      path.basename(game.filename, path.extname(game.filename))
-    )
+        if (!game) throw new Error('Game with id ' + gameId + ' not found!')
 
-    repack(extractedFolder, originalZipPath)
-  })
+        if (!gamebase.folders?.games) {
+          throw new Error('Games folder not set!', { cause: 1 })
+        }
+        if (!gamebase.folders?.extractTo) {
+          throw new Error('ExtractTo folder not set!', { cause: 1 })
+        }
+        if (!game.filename) {
+          throw new Error('Game has no filename!', { cause: 1 })
+        }
+
+        const originalZipPath = path.join(gamebase.folders.games, game.filename)
+        const extractedFolder = path.join(
+          gamebase.folders.extractTo,
+          path.basename(game.filename, path.extname(game.filename))
+        )
+
+        repack(extractedFolder, originalZipPath)
+
+        return true
+      }
+
+      return false
+    }
+  )
 }

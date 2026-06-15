@@ -21,26 +21,23 @@ export function useGameLauncher() {
       try {
         const result = await window.electron.execute(gamebaseId, gameId, emulatorId)
         if (selectedGamebase?.repacking?.repackGames && result.fileModified) {
-          let repack = true
           if (selectedGamebase?.repacking?.askBefore) {
             openConfirmDialog({
               mode: 'yesno',
               message: t('game.launch.repack'),
               title: t('game.launch.repack_title')
-            }).then(async (result) => {
-              repack = result
-            })
-          }
-
-          if (repack) {
-            const result = await window.electron.repackGame(gameId, gamebaseId)
-            if (selectedGamebase.repacking.notifyAfter) {
-              if (result) {
-                toast.success(t('game.launch.repack_success'))
-              } else {
-                toast.success(t('game.launch.repack_failed'))
+            }).then(async (repack) => {
+              if (repack) {
+                const result = await window.electron.repackGame(gameId, gamebaseId)
+                if (selectedGamebase?.repacking?.notifyAfter) {
+                  if (result) {
+                    toast.success(t('game.launch.repack_success'))
+                  } else {
+                    toast.success(t('game.launch.repack_failed'))
+                  }
+                }
               }
-            }
+            })
           }
         }
       } catch (error) {
@@ -49,7 +46,7 @@ export function useGameLauncher() {
         setIsLoading(false)
       }
     },
-    []
+    [openConfirmDialog, selectedGamebase]
   )
 
   return { launchGame, isLoading }

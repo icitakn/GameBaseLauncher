@@ -22,7 +22,7 @@ export function normalizePath(filePath: string): string {
 export function extract(filename: string, extractTo: string) {
   console.log('extracting ', filename, ' to ', extractTo)
   const c = new AdmZip(normalizePath(filename))
-  c.extractAllTo(extractTo)
+  c.extractAllTo(extractTo, true)
 }
 
 export function repack(extractedFolder: string, originalZipPath: string): void {
