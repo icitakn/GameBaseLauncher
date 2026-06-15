@@ -11,7 +11,7 @@ const FormCheckbox = ({ name, label, control, sx }: FormInputProps) => {
         return (
           <FormControl>
             <FormControlLabel
-              control={<Checkbox sx={sx} checked={value} onChange={onChange} />}
+              control={<Checkbox sx={sx} checked={value ?? false} onChange={onChange} />}
               label={label}
             />
           </FormControl>

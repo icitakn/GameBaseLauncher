@@ -5,6 +5,7 @@ import { Settings } from '../../shared/models/settings.model'
 import path from 'path'
 import { app, shell } from 'electron'
 import { ExtraFileResult } from '@shared/types/file.types'
+import { createHash } from 'crypto'
 
 const CONFIG_FILE = 'config.json'
 
@@ -21,7 +22,40 @@ export function normalizePath(filePath: string): string {
 export function extract(filename: string, extractTo: string) {
   console.log('extracting ', filename, ' to ', extractTo)
   const c = new AdmZip(normalizePath(filename))
-  c.extractAllTo(extractTo)
+  c.extractAllTo(extractTo, true)
+}
+
+export function repack(extractedFolder: string, originalZipPath: string): void {
+  const normalizedZipPath = normalizePath(originalZipPath)
+  const normalizedFolder = normalizePath(extractedFolder)
+
+  console.log('repacking', normalizedFolder, 'into', normalizedZipPath)
+
+  if (!existsSync(normalizedFolder)) {
+    throw new Error(`Extracted folder not found: ${normalizedFolder}`)
+  }
+
+  const zip = new AdmZip()
+
+  const addFolderRecursive = (folderPath: string, zipBasePath: string) => {
+    const entries = readdirSync(folderPath, { withFileTypes: true })
+
+    for (const entry of entries) {
+      const fullPath = path.join(folderPath, entry.name)
+      const zipEntryPath = zipBasePath ? path.join(zipBasePath, entry.name) : entry.name
+
+      if (entry.isDirectory()) {
+        addFolderRecursive(fullPath, zipEntryPath)
+      } else {
+        zip.addFile(zipEntryPath.replace(/\\/g, '/'), readFileSync(fullPath))
+      }
+    }
+  }
+
+  addFolderRecursive(normalizedFolder, '')
+  zip.writeZip(normalizedZipPath)
+
+  console.log('repack complete:', normalizedZipPath)
 }
 
 export function listFilesInZip(filename: string) {
@@ -269,5 +303,14 @@ export function readExtraFile(filePath: string, extraFolder: string): ExtraFileR
 
     default:
       throw new Error(`Unsupported file type: ${ext}`)
+  }
+}
+
+export function fileHash(filePath: string): string | null {
+  try {
+    const buf = readFileSync(filePath)
+    return createHash('sha256').update(buf).digest('hex')
+  } catch {
+    return null
   }
 }

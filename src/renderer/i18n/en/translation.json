@@ -78,7 +78,10 @@
       "music_folder": "Music folder",
       "photos_folder": "Photos folder",
       "extras_folder": "Extras folder",
-      "gemus_file": "GEMUS script file"
+      "gemus_file": "GEMUS script file",
+      "repack_games": "Repack unpacked games after playing (if changed)",
+      "ask_before": "Ask before repacking",
+      "notify_after": "Notify me on successful repack"
     },
     "errors": {
       "name_required": "Please enter a name.",
@@ -99,7 +102,8 @@
       "languages": "Languages",
       "difficulties": "Difficulties",
       "rarities": "Rarities",
-      "licenses": "Licenses"
+      "licenses": "Licenses",
+      "games": "Games"
     }
   },
   "game": {
@@ -153,6 +157,14 @@
     "pal_ntsc": "PAL/NTSC",
     "messages": {
       "screenshots": "To view screenshots, set the image folder in the gamebase settings!"
+    },
+    "launch": {
+      "title": "Starting game",
+      "message": "Starting ",
+      "repack": "Do you want to repack the game?",
+      "repack_title": "Repacking",
+      "repack_success": "Repacking successful",
+      "repack_failed": "Repacking failed"
     }
   },
   "forms": {

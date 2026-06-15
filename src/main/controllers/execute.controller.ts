@@ -4,6 +4,7 @@ import { loadGamebase } from './gamebase.controller'
 import { Game } from '../entities/game.entity'
 import { execute, playMusic } from '../services/executor.service'
 import { Music } from '../entities/music.entity'
+import { ExecutionResult } from '@shared/models/settings.model'
 
 export const registerExecuteController = () => {
   ipcMain.handle(
@@ -17,9 +18,15 @@ export const registerExecuteController = () => {
           .findOne(Game, [gameId], { populate: ['genre', 'genre.parent'] })
 
         if (game) {
-          execute(gamebase, game, emulatorId)
+          return await execute(gamebase, game, emulatorId)
         }
       }
+
+      const result: ExecutionResult = {
+        fileModified: false
+      }
+
+      return result
     }
   )
 

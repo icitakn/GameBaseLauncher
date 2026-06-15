@@ -36,6 +36,7 @@ import { TabPanel } from '@renderer/components/common/tab-panel'
 import { UUID } from 'crypto'
 import { ExtraDialog } from '@renderer/components/extra-dialog/extra-dialog'
 import { ExtraFileResult } from '@shared/types/file.types'
+import { useGameLauncher } from '@renderer/hooks/useGameLauncher'
 
 export interface GamePanelProps {
   selected?: GameDTO | null
@@ -123,13 +124,11 @@ export function GamePanel({ selected, selectedGamebase }: GamePanelProps): React
   const emulators = selectedGamebase?.emulators ?? []
   const hasMultipleEmulators = emulators.length > 1
 
+  const { launchGame } = useGameLauncher()
+
   const execute = async (emulatorId?: string): Promise<void> => {
     if (game && game.id && selectedGamebase?.id) {
-      try {
-        await window.electron.execute(selectedGamebase.id, game.id, emulatorId)
-      } catch (error) {
-        toast.error(t('common.error_occured') + error)
-      }
+      launchGame(selectedGamebase.id, game.id, game.name, emulatorId)
     }
   }
 

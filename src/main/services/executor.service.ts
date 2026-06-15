@@ -1,7 +1,7 @@
-import { GameBase } from '@shared/models/settings.model'
+import { ExecutionResult, GameBase } from '@shared/models/settings.model'
 import { Game } from '../entities/game.entity'
 import { Genre } from '../entities/genre.entity'
-import { extract, getSettings, normalizePath, saveSettings } from './file.service'
+import { extract, fileHash, getSettings, normalizePath, saveSettings } from './file.service'
 import { executeGemusScript, loadGemusScript, parseKvPairs, GemusContext } from './gemus.service'
 import * as child from 'child_process'
 import * as fs from 'fs'
@@ -13,6 +13,17 @@ const EXECUTABLE_EXTENSIONS: Record<string, string[]> = {
   win32: ['.exe', '.bat', '.cmd', '.com'],
   darwin: ['.app', '.sh', ''],
   linux: ['.sh', '.AppImage', '']
+}
+
+function spawnAndWait(executable: string, args: string[]): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const proc = child.spawn(executable, args, { stdio: 'ignore' })
+    proc.on('close', (code) => {
+      if (code === 0 || code !== null) resolve()
+      else reject(new Error(`Process exited with code ${code}`))
+    })
+    proc.on('error', reject)
+  })
 }
 
 function isExecutable(filePath: string): boolean {
@@ -35,7 +46,11 @@ function isExecutable(filePath: string): boolean {
   return true
 }
 
-export function execute(gamebase: GameBase, game: Game, emulatorId?: string) {
+export async function execute(
+  gamebase: GameBase,
+  game: Game,
+  emulatorId?: string
+): Promise<ExecutionResult> {
   if (!gamebase || !gamebase.folders || !gamebase.folders.games) {
     log.info('Games folder is not set!')
   }
@@ -51,8 +66,10 @@ export function execute(gamebase: GameBase, game: Game, emulatorId?: string) {
 
   if (normalizedFilename.endsWith('.zip')) {
     if (gamebase?.folders?.extractTo && game.fileToRun) {
-      extract(gamepath, gamebase.folders.extractTo)
-      gamepath = path.join(gamebase.folders.extractTo, game.fileToRun)
+      const folderName = path.basename(gamepath, path.extname(gamepath))
+      const targetFolder = path.join(gamebase.folders.extractTo, folderName)
+      extract(gamepath, targetFolder)
+      gamepath = path.join(targetFolder, game.fileToRun)
     } else {
       throw new Error(
         'Zip file found but no extractTo folder or the game has no file to run after unzipping'
@@ -95,8 +112,14 @@ export function execute(gamebase: GameBase, game: Game, emulatorId?: string) {
       kvPairs
     }
 
+    const hashBefore = fileHash(gamepath)
+    let hashAfter
     try {
+      const startTime = new Date().getTime()
+
       const scriptResult = executeGemusScript(scriptContent, ctx, resolvedEmulator)
+      const playTime = new Date().getTime() - startTime
+      hashAfter = fileHash(gamepath)
 
       if (!scriptResult.shouldRun) {
         log.info(`[GEMUS] Script decided not to run the game (shouldRun=false)`)
@@ -104,20 +127,20 @@ export function execute(gamebase: GameBase, game: Game, emulatorId?: string) {
           log.info(`[GEMUS] Exit message: ${scriptResult.exitMessage}`)
         }
         // Still record stats so the game shows up as attempted
-        recordGamePlayed(gamebase, game)
-        return
+        recordGamePlayed({ gamebase, game, emulatorId: emulator?.id, playTime })
+        return { fileModified: hashAfter !== hashBefore }
       }
 
       // Stats are recorded after the emulator finishes;
       // GEMUS already calls spawnProcess internally in Run_Emulator() /
       // Run_GameFile(). We still track stats here.
-      recordGamePlayed(gamebase, game)
+      recordGamePlayed({ gamebase, game, emulatorId: emulator?.id, playTime })
     } catch (err) {
       log.error(`[GEMUS] Script execution failed for "${game.name}": ${err}`)
       throw err
     }
 
-    return
+    return { fileModified: hashAfter ? hashAfter !== hashBefore : false }
   }
 
   // -------------------------------------------------------------------------
@@ -129,32 +152,20 @@ export function execute(gamebase: GameBase, game: Game, emulatorId?: string) {
     throw new Error(msg)
   }
 
-  child.execFile(
-    emulator?.path || gamepath,
-    emulator?.path ? [gamepath] : [],
-    (error: child.ExecFileException | null, _stdout: string, _stderr: string) => {
-      const settings = getSettings()
+  const emulatorPath = emulator?.path || gamepath
+  const args = emulator?.path ? [gamepath] : []
+  const startTime = new Date().getTime()
+  const hashBefore = fileHash(gamepath)
 
-      const alreadyPlayedIdx = settings.stats.gamesPlayed.findIndex(
-        (played) => played.id === game.id
-      )
-      if (alreadyPlayedIdx > 0) {
-        const playtime =
-          new Date().getTime() - settings.stats.gamesPlayed[alreadyPlayedIdx].lastPlayedAtMs
-        settings.stats.gamesPlayed[alreadyPlayedIdx].playtimeInMs += playtime
-        saveSettings(settings)
-      }
+  await spawnAndWait(emulatorPath, args)
 
-      if (error) {
-        log.error('An error occured while executing game ' + game.name + ': ' + error)
-        log.error('Game info: ' + JSON.stringify(game))
-        log.error('Path: ' + path)
-        throw new Error('An error occured while executing game ' + game.name + ': ' + error)
-      }
-    }
-  )
+  const hashAfter = fileHash(gamepath)
 
-  recordGamePlayed(gamebase, game, emulator?.id)
+  const playTime = new Date().getTime() - startTime
+
+  recordGamePlayed({ gamebase, game, emulatorId: emulator?.id, playTime })
+
+  return { fileModified: hashAfter !== hashBefore }
 }
 
 // ---------------------------------------------------------------------------
@@ -168,7 +179,17 @@ const getFullLabel = (genre: Genre): string => {
   return parentLabel ? parentLabel + ' - ' + name : name
 }
 
-function recordGamePlayed(gamebase: GameBase, game: Game, emulatorId?: string): void {
+function recordGamePlayed({
+  gamebase,
+  game,
+  emulatorId,
+  playTime
+}: {
+  gamebase: GameBase
+  game: Game
+  emulatorId?: string
+  playTime: number
+}): void {
   if (!game.id) return
 
   const settings = getSettings()
@@ -179,6 +200,7 @@ function recordGamePlayed(gamebase: GameBase, game: Game, emulatorId?: string): 
   const alreadyPlayedIdx = settings.stats.gamesPlayed.findIndex((played) => played.id === game.id)
   if (alreadyPlayedIdx >= 0) {
     settings.stats.gamesPlayed[alreadyPlayedIdx].lastPlayedAtMs = new Date().getTime()
+    settings.stats.gamesPlayed[alreadyPlayedIdx].playtimeInMs += playTime
   } else {
     settings.stats.gamesPlayed = [
       ...settings.stats.gamesPlayed,
@@ -189,7 +211,7 @@ function recordGamePlayed(gamebase: GameBase, game: Game, emulatorId?: string): 
         genre: game.genre ? getFullLabel(game.genre) : 'Unknown',
         lastPlayedAtMs: new Date().getTime(),
         name: game.name || 'Unknown',
-        playtimeInMs: 0,
+        playtimeInMs: playTime,
         rating: game.rating ?? 0
       }
     ]

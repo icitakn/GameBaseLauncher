@@ -598,7 +598,7 @@ function executeLine(
 // Process spawning helper
 // ---------------------------------------------------------------------------
 
-function spawnProcess(executable: string, params: string, cwd?: string, wait = false): void {
+function spawnProcess(executable: string, params: string, cwd?: string, wait = true): void {
   if (!executable) {
     log.error('[GEMUS] spawnProcess: no executable specified')
     return
@@ -612,11 +612,12 @@ function spawnProcess(executable: string, params: string, cwd?: string, wait = f
 
   log.info(`[GEMUS] Spawning: ${fullCommand}`)
 
-  if (wait) {
-    child.execSync(fullCommand, { cwd, stdio: 'ignore' })
-  } else {
-    child.exec(fullCommand, { cwd })
-  }
+  // disabling async functionality for having the repacking functionality
+  // if (wait) {
+  child.execSync(fullCommand, { cwd, stdio: 'ignore' })
+  // } else {
+  //   child.exec(fullCommand, { cwd })
+  // }
 }
 
 // ---------------------------------------------------------------------------

@@ -7,11 +7,15 @@ import { GameBase } from '@shared/models/settings.model'
 import DataTable from '../../data-table/data-table'
 import { t } from 'i18next'
 import { GameDTO, MusicianDTO } from '@shared/models/form-schemes.model'
-import { toast } from 'react-toastify'
 import { IMAGE_BASE64_PREFIX } from '@shared/consts'
+import { UUID } from 'crypto'
+import { useGameLauncher } from '@renderer/hooks/useGameLauncher'
 
 const columnHelper = createColumnHelper<GameDTO>()
-const columns = (gamebase: GameBase) => [
+const columns = (
+  gamebase: GameBase,
+  launchGame: (gamebaseId: UUID, gameId: number, gameName: string, emulatorId?: string) => void
+) => [
   columnHelper.accessor('id', { header: 'ID' }),
   columnHelper.accessor('name', { header: 'NAME' }),
   columnHelper.display({
@@ -30,7 +34,9 @@ const columns = (gamebase: GameBase) => [
               <FontAwesomeIcon
                 icon={faGamepad}
                 fontSize="2.2em"
-                onClick={() => execute(gamebase, props.row.original)}
+                onClick={() =>
+                  launchGame(gamebase.id, props.row.original.id!, props.row.original.name)
+                }
               />
             </Box>
           )}
@@ -39,16 +45,6 @@ const columns = (gamebase: GameBase) => [
     }
   })
 ]
-
-const execute = async (gamebase: GameBase, game: GameDTO) => {
-  if (game && game.id) {
-    try {
-      await window.electron.execute(gamebase.id, game.id)
-    } catch (error) {
-      toast.error(t('common.error_occured') + error)
-    }
-  }
-}
 
 export interface MusicianPanelProps {
   selected?: MusicianDTO | null
@@ -60,8 +56,9 @@ export function MusicianPanel({ selected, selectedGamebase }: MusicianPanelProps
   const [loading, setLoading] = useState(false)
   const [image, setImage] = useState<string | null>()
   const [imageFolderError, setImageFolderError] = useState(false)
+  const { launchGame } = useGameLauncher()
 
-  const cols = useMemo(() => columns(selectedGamebase), [selectedGamebase])
+  const cols = useMemo(() => columns(selectedGamebase, launchGame), [launchGame, selectedGamebase])
 
   const fetchImage = useCallback(async () => {
     if (selected?.photo && selectedGamebase?.id) {

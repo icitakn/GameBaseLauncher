@@ -1,6 +1,7 @@
 import { ipcRenderer } from 'electron'
 import { GameDTO } from '@shared/models/form-schemes.model'
 import { ExtraFileResult } from '@shared/types/file.types'
+import { UUID } from 'crypto'
 
 export const fileApi = {
   getOrCreateSettings: () => ipcRenderer.invoke('file:getOrCreateSettings'),
@@ -20,5 +21,7 @@ export const fileApi = {
     extraFolder: string,
     gamebaseId: string
   ): Promise<ExtraFileResult> =>
-    ipcRenderer.invoke('file:readExtra', filePath, fileToRun, extraFolder, gamebaseId)
+    ipcRenderer.invoke('file:readExtra', filePath, fileToRun, extraFolder, gamebaseId),
+  repackGame: (gameId: number, gamebaseId: UUID): Promise<boolean> =>
+    ipcRenderer.invoke('file:repackGame', gameId, gamebaseId)
 }

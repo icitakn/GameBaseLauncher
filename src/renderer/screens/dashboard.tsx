@@ -30,6 +30,7 @@ import { GamePlayed, MusicListened } from '@shared/models/settings.model'
 import { formatLastPlayed, formatPlaytime } from '../lib/datetime-utils'
 import { t } from 'i18next'
 import { toast } from 'react-toastify'
+import { useGameLauncher } from '@renderer/hooks/useGameLauncher'
 
 const Dashboard = () => {
   const { settings, setSettings } = useContext(SettingsContext)
@@ -42,6 +43,7 @@ const Dashboard = () => {
 
   const [recentGames, setRecentGames] = useState<GamePlayed[]>([])
   const [recentMusic, setRecentMusic] = useState<MusicListened[]>([])
+  const { launchGame } = useGameLauncher()
 
   useEffect(() => {
     if (settings) {
@@ -108,13 +110,7 @@ const Dashboard = () => {
   )
 
   async function handleStartGame(game: GamePlayed) {
-    setModalMsg(t('translation:common.starting') + ' ' + game.name)
-    setOpen(true)
-    try {
-      await window.electron.execute(game.gamebaseId, game.id, game.emulatorId)
-    } catch (error) {
-      toast.error(t('common.error_occured') + error)
-    }
+    launchGame(game.gamebaseId, game.id, game.name, game.emulatorId)
   }
 
   function handlePlayMusic(music: MusicListened): void {
@@ -142,26 +138,12 @@ const Dashboard = () => {
 
   return (
     <Box sx={{ flexGrow: 1, p: 3, minHeight: '100%' }}>
-      <Modal
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={style}>
-          <Typography id="modal-modal-title" variant="h6" component="h2">
-            {modalMsg}
-          </Typography>
-        </Box>
-      </Modal>
-      {/* Header */}
       <Box mb={3}>
         <Typography variant="h4" component="h1" gutterBottom fontWeight="bold" color="primary">
           {t('translation:common.welcome')}
         </Typography>
       </Box>
 
-      {/* Statistiken Cards */}
       <Grid2 container spacing={3} sx={{ mb: 3 }}>
         <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
