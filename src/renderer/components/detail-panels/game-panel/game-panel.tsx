@@ -1,4 +1,4 @@
-import { ExtraDTO, GameDTO } from '@shared/models/form-schemes.model'
+import { ExtraDTO, GameDTO, GameUserDataDTO } from '@shared/models/form-schemes.model'
 import {
   Box,
   Button,
@@ -53,6 +53,7 @@ export function GamePanel({ selected, selectedGamebase }: GamePanelProps): React
 
   const { loadGameById } = useEntityStore()
   const [game, setGame] = useState<GameDTO | null>(null)
+  const [gameUserdata, setGameUserdata] = useState<GameUserDataDTO | null>(null)
   const [loadingDetail, setLoadingDetail] = useState(true)
   const [loadingExtras, setLoadingExtras] = useState(true)
   const [extras, setExtras] = useState<ExtraDTO[]>([])
@@ -110,6 +111,8 @@ export function GamePanel({ selected, selectedGamebase }: GamePanelProps): React
       setLoadingDetail(true)
       try {
         const fullGame = await loadGameById(id, gamebaseId)
+        const userData = await window.electron.getGameUserdata(id, gamebaseId)
+        console.log('user', userData)
         setSelectedTab(0)
         setGame(fullGame)
       } finally {
@@ -388,8 +391,9 @@ export function GamePanel({ selected, selectedGamebase }: GamePanelProps): React
           )}
           <Divider variant="middle" component="div" />
           <Tabs value={selectedTab} onChange={handleTabChange}>
-            <Tab label={'Game info'} />
-            <Tab label={'Extras'} />
+            <Tab label={t('translation:forms.game.tabs.game')} />
+            <Tab label={t('translation:forms.game.tabs.extras')} />
+            <Tab label={t('translation:forms.game.tabs.personal')} />
           </Tabs>
 
           <TabPanel value={selectedTab} index={0} sx={{ overflowY: 'auto', flex: 1 }}>
@@ -429,6 +433,9 @@ export function GamePanel({ selected, selectedGamebase }: GamePanelProps): React
                 ))}
               </List>
             )}
+          </TabPanel>
+          <TabPanel value={selectedTab} index={2} sx={{ overflowY: 'auto', flex: 1 }}>
+            <></>
           </TabPanel>
         </Stack>
       )}

@@ -3,8 +3,9 @@ import { ReactElement, useContext, useEffect, useRef, useState } from 'react'
 import { Settings } from '@shared/models/settings.model'
 import { SettingsContext } from './contexts/settings.context'
 import Router from './router'
-import { InitI18N } from './i18n/config'
+import { setAppLanguage } from './i18n/config'
 import { useGamebasePolling } from './hooks/useGamebasePolling'
+import { Box, CircularProgress } from '@mui/material'
 
 function AppContent(): ReactElement {
   useGamebasePolling()
@@ -17,7 +18,12 @@ function AppContent(): ReactElement {
     hasNavigated.current = true
 
     const pos = settings.lastPosition
-    if (settings.rememberLastPosition && pos && pos.baseUrl) {
+    if (!pos || !pos.baseUrl) return
+
+    const gbId = pos.baseUrl.split('/')[2]
+    if (!settings.gamebases.find((gb) => gb.id === gbId)) return
+
+    if (settings.rememberLastPosition) {
       navigate(`${pos.baseUrl}?entry=${pos.entry}`)
     }
   }, [settings])
@@ -32,9 +38,24 @@ export default function App(): ReactElement {
   useEffect(() => {
     window.electron.getOrCreateSettings().then((settings: Settings) => {
       setSettings(settings)
-      InitI18N(settings?.language)
+      setAppLanguage(settings?.language)
     })
   }, [])
+
+  if (!settings) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh'
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    )
+  }
 
   return (
     <HashRouter>

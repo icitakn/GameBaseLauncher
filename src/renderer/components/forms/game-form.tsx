@@ -121,10 +121,7 @@ export const GameForm = forwardRef<FormHandle, EditFormProps<GameDTO>>(({ select
       loadingScreen: false,
       highscoreSaver: false,
       trueDriveEmu: false,
-      highscore: '',
-      rating: 0,
       adult: false,
-      fav: false,
       comment: '',
       versionComment: '',
       memoText: ''
@@ -175,10 +172,7 @@ export const GameForm = forwardRef<FormHandle, EditFormProps<GameDTO>>(({ select
       setValue('loadingScreen', selected.loadingScreen)
       setValue('highscoreSaver', selected.highscoreSaver)
       setValue('trueDriveEmu', selected.trueDriveEmu)
-      setValue('highscore', selected.highscore)
-      setValue('rating', selected.rating)
       setValue('adult', selected.adult)
-      setValue('fav', selected.fav)
       setValue('memoText', selected.memoText)
     }
   }, [selected, setValue])
@@ -668,6 +662,22 @@ export const GameForm = forwardRef<FormHandle, EditFormProps<GameDTO>>(({ select
                   name="reviewRating"
                   label={t('translation:game.review_rating')}
                 />
+                <FormAutocomplete
+                  control={control}
+                  label={t('translation:game.difficulty')}
+                  name="difficulty"
+                  optionsLoader={() => loadDifficulties(gamebase?.id)}
+                  options={difficultyStore}
+                  preselected={
+                    selected?.difficulty?.id
+                      ? {
+                          id: selected?.difficulty?.id,
+                          label: selected?.difficulty?.name ?? ''
+                        }
+                      : undefined
+                  }
+                />
+
                 <FormTextField control={control} name="comment" label="Comment" />
               </Stack>
             </TabPanel>
@@ -864,21 +874,6 @@ export const GameForm = forwardRef<FormHandle, EditFormProps<GameDTO>>(({ select
             </TabPanel>
             <TabPanel value={selectedTab} index={3}>
               <Stack direction="column" spacing={2}>
-                <FormAutocomplete
-                  control={control}
-                  label={t('translation:game.difficulty')}
-                  name="difficulty"
-                  optionsLoader={() => loadDifficulties(gamebase?.id)}
-                  options={difficultyStore}
-                  preselected={
-                    selected?.difficulty?.id
-                      ? {
-                          id: selected?.difficulty?.id,
-                          label: selected?.difficulty?.name ?? ''
-                        }
-                      : undefined
-                  }
-                />
                 <FormSelect
                   name="rating"
                   control={control}

@@ -217,7 +217,8 @@
         "game": "Game",
         "files": "Files",
         "version": "Version",
-        "personal": "Personal"
+        "personal": "Personal",
+        "extras": "Extras"
       }
     }
   },

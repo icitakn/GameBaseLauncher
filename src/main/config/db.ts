@@ -1,23 +1,32 @@
 import { MikroORM, Options } from '@mikro-orm/better-sqlite'
-import config from './mikro-orm.config'
 import { Migrator } from '@mikro-orm/migrations'
+import { mainConfig, userConfig } from './mikro-orm.config'
+import { DbKey } from './entities'
 
-export const initORM = async ({ dbName }: { dbName: string }): Promise<MikroORM> => {
+const configs: Record<DbKey, Options> = {
+  main: mainConfig,
+  user: userConfig
+}
+
+export const initORM = async ({
+  dbName,
+  dbKey
+}: {
+  dbName: string
+  dbKey: DbKey
+}): Promise<MikroORM> => {
   try {
     const orm = await MikroORM.init({
-      ...config,
+      ...configs[dbKey],
       extensions: [Migrator],
       dbName
-      //   ...credentials
     } as Options)
 
     await orm.getMigrator().up()
 
     return orm
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
-    console.log('=== error connecting to database ====', err.message)
+    console.log(`=== error connecting to database (${dbKey}) ====`, err.message)
     throw err
   }
 }

@@ -3,7 +3,7 @@ import { readFileSync } from 'fs'
 import { ImportFileCheckResult } from '../../shared/models/settings.model'
 import { initDb } from '../initializers'
 import { EntityName, FindOptions, MikroORM, PopulatePath } from '@mikro-orm/better-sqlite'
-import { Game } from '../entities/game.entity'
+import { Game } from '../entities/main/game.entity'
 
 export async function getAllGames(db: MikroORM): Promise<Game[]> {
   const games = await db.em.fork().findAll(Game)
@@ -19,11 +19,13 @@ export async function upsert<Entity extends object>(
   return result
 }
 
-export async function loadDatabase(dbFile: string): Promise<MikroORM> {
+export async function loadDatabase(dbFile: string): Promise<{ main: MikroORM; user: MikroORM }> {
   if (!dbFile || dbFile.endsWith('.mdb')) {
     throw new Error('Invalid or missing db file')
   }
-  return await initDb(dbFile)
+  const main = await initDb(dbFile, 'main')
+  const user = await initDb(dbFile.replace('.db', '.user.db'), 'user')
+  return { main, user }
 }
 
 export async function checkImportFile(filename: string): Promise<ImportFileCheckResult> {

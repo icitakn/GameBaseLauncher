@@ -99,7 +99,6 @@ export const gameSchema = object().shape({
   programmer: refObject.nullable(),
   language: refObject.nullable(),
   classic: number().nullable(),
-  rating: number().nullable(),
   palNtsc: number().nullable(),
   length: number().nullable(),
   trainers: number().nullable(),
@@ -143,9 +142,7 @@ export const gameSchema = object().shape({
   playable: bool().nullable(),
   original: bool().nullable(),
   cloneOf: refObject.nullable(),
-  reviewRating: number().nullable(),
-  highscore: string().nullable(),
-  fav: bool().nullable()
+  reviewRating: number().nullable()
 })
 
 export const extraSchema = object().shape({
@@ -157,6 +154,15 @@ export const extraSchema = object().shape({
   path: string().nullable(),
   data: string().nullable(),
   fileToRun: string().nullable()
+})
+
+export const gameUserDataSchema = object().shape({
+  gameId: number().required(),
+  rating: number().nullable(),
+  favorite: bool().default(false),
+  notes: string().nullable(),
+  lastPlayedAt: string().nullable(),
+  playCount: number().min(0).default(0)
 })
 
 export type GamebaseDTO = InferType<typeof gamebaseSchema>
@@ -175,6 +181,8 @@ export type MusicianDTO = InferType<typeof musicianSchema>
 export type MusicDTO = InferType<typeof musicSchema>
 export type GenreDTO = InferType<typeof genreSchema>
 export type ExtraDTO = InferType<typeof extraSchema>
+
+export type GameUserDataDTO = InferType<typeof gameUserDataSchema>
 
 export interface AppInfo {
   name: string

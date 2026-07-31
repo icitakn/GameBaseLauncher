@@ -8,6 +8,7 @@ import { registerFileController } from './controllers/file.controller'
 import { is } from '@electron-toolkit/utils'
 import log from 'electron-log'
 import { platform } from 'os'
+import { registerUserDataController } from './controllers/userdata.controller'
 
 let appUrl = 'http://localhost:5173'
 const wsUrl = 'ws://localhost:5173'
@@ -18,6 +19,7 @@ const createWindow = (): void => {
   registerExecuteController()
   registerGamebaseController()
   registerFileController()
+  registerUserDataController()
 
   // Create the browser window.
   const mainWindow = new BrowserWindow({

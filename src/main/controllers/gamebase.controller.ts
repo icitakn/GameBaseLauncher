@@ -11,10 +11,10 @@ import log from 'electron-log'
 import createWorker from '../worker?nodeWorker'
 
 let currentGamebaseId: UUID
-let db: MikroORM
+let db: { main: MikroORM; user: MikroORM }
 
 function callImportData(gamebase: GameBase): void {
-  createWorker({ workerData: gamebase })
+  createWorker({ workerData: { task: 'import', payload: { gamebase } } })
     .on('message', (message) => {
       log.info(`Message from worker: ${JSON.stringify(message)}`)
       if (message) {
@@ -36,83 +36,6 @@ function callImportData(gamebase: GameBase): void {
       log.info(`Worker exited with code: ${code}`)
     })
     .postMessage('')
-
-  // const workerPath = is.dev
-  //   ? path.join(__dirname, 'worker.js')
-  //   : path.join(app.getAppPath(), 'dist', 'main', 'worker.js')
-  //    : path.join(process.resourcesPath, 'app.asar', 'dist', 'main', 'worker.js')
-
-  // const child = fork(workerPath, ['worker'], {
-  //   stdio: ['pipe', 'pipe', 'pipe', 'ipc'] // Für besseres Debugging
-  // })
-  // const workerPath = is.dev
-  //   ? path.join(__dirname, '..', 'main', 'worker.js')
-  //   : path.join(__dirname, 'worker.js') // In der Prod liegen index.js und worker.js nebeneinander
-
-  // // utilityProcess kann nativ mit ASAR-Pfaden umgehen!
-  // const child = utilityProcess.fork(workerPath, [], {
-  //   stdio: 'inherit' // Leitet worker-logs direkt in deine Haupt-Konsole um
-  // })
-
-  // child.on('spawn', () => {
-  //   log.info('Worker erfolgreich gestartet')
-  //   // child.postMessage({ gamebase })
-  // })
-
-  // child.on('message', (msg) => {
-  //   if (msg === 'WORKER_READY') {
-  //     log.info('Main: Worker signalisiert Bereitschaft. Sende Daten...');
-  //     child.postMessage({ gamebase })
-  //   } else if (msg === 'Import finished') {
-  //     log.info('Main: Import erfolgreich abgeschlossen')
-  //   } else if (msg.error) {
-  //     log.error('Main: Worker Fehler gemeldet:', msg.error)
-  //   }
-  // });
-
-  // child.on('exit', (code) => {
-  //   log.info(`Worker beendet mit Code ${code}`)
-  // })
-  // log.info('Starting worker: ', workerPath)
-
-  // const child = fork(workerPath, [], {
-  //   stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
-  //   execArgv: []
-  // })
-
-  // child.stdout?.on('data', (data) => {
-  //   log.info('Worker stdout: ', data)
-  // })
-
-  // child.stderr?.on('data', (data) => {
-  //   log.error('Worker stderr: ', data)
-  // })
-
-  // // const child = fork(resolve(__dirname, 'worker.js'), ['worker'])
-  // child.on('message', function (message: string) {
-  //   log.info('Message from worker: ', message)
-  // })
-  // child.on('error', function (message: string) {
-  //   log.error('Worker error: ', message)
-  // })
-
-  // child.on('close', function (code) {
-  //   log.info('child process exited with code ' + code)
-  //   const settings = getSettings()
-  //   const gbInSettings = settings.gamebases.find((gb) => gb.id === gamebase.id)
-  //   if (gbInSettings) {
-  //     if (code === 0) {
-  //       gbInSettings.state = 'Import finished'
-  //     } else {
-  //       gbInSettings.state = 'Import failed'
-  //     }
-  //     saveSettings(settings)
-  //   }
-  // })
-
-  // child.send({ gamebase })
-  // setTimeout(() => {
-  // }, 2_500)
 }
 
 export async function loadGamebase(gamebaseId: UUID) {
@@ -123,11 +46,41 @@ export async function loadGamebase(gamebaseId: UUID) {
 
     currentGamebaseId = gamebaseId
   }
-  return { db, gamebase }
+  return { db: db?.main, user: db?.user, gamebase }
 }
 
 export function shutdown() {
-  db?.close()
+  db?.main.close()
+  db?.user.close()
+}
+
+function callMigrateUserDbs(): void {
+  const settings = getOrCreateSettings()
+  const gamebases = settings.gamebases?.filter((gb) => gb.dbFile)
+
+  if (!gamebases.length) return
+
+  createWorker({
+    workerData: {
+      task: 'migrate-user-dbs',
+      payload: { gamebases, configPath: path.join(app.getPath('userData'), 'config.json') }
+    }
+  })
+    .on('message', (message) => {
+      log.info(`Migration worker: ${JSON.stringify(message)}`)
+      if (message.status === 'failed') {
+        const settings = getSettings()
+        const gb = settings.gamebases.find((gb) => gb.id === message.gamebaseId)
+        if (gb) {
+          gb.state = 'Migration failed'
+          saveSettings(settings)
+        }
+      }
+    })
+    .on('exit', (code) => {
+      log.info(`Migration worker exited with code: ${code}`)
+    })
+    .postMessage('')
 }
 
 export const registerGamebaseController = () => {
@@ -213,4 +166,6 @@ export const registerGamebaseController = () => {
       }
     }
   })
+
+  callMigrateUserDbs()
 }

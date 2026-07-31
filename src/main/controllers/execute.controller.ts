@@ -1,16 +1,16 @@
 import { UUID } from 'crypto'
 import { ipcMain } from 'electron'
 import { loadGamebase } from './gamebase.controller'
-import { Game } from '../entities/game.entity'
+import { Game } from '../entities/main/game.entity'
 import { execute, playMusic } from '../services/executor.service'
-import { Music } from '../entities/music.entity'
+import { Music } from '../entities/main/music.entity'
 import { ExecutionResult } from '@shared/models/settings.model'
 
 export const registerExecuteController = () => {
   ipcMain.handle(
     'execute:game',
     async (_, gamebaseId: UUID, gameId: number, emulatorId?: string) => {
-      const { db, gamebase } = await loadGamebase(gamebaseId)
+      const { db, user, gamebase } = await loadGamebase(gamebaseId)
 
       if (gamebase) {
         const game = await db.em
@@ -18,7 +18,7 @@ export const registerExecuteController = () => {
           .findOne(Game, [gameId], { populate: ['genre', 'genre.parent'] })
 
         if (game) {
-          return await execute(gamebase, game, emulatorId)
+          return await execute(gamebase, game, user, emulatorId)
         }
       }
 
@@ -33,7 +33,7 @@ export const registerExecuteController = () => {
   ipcMain.handle(
     'execute:music',
     async (_, gamebaseId: UUID, options: { gameId?: number; musicId?: number }) => {
-      const { db, gamebase } = await loadGamebase(gamebaseId)
+      const { db, user, gamebase } = await loadGamebase(gamebaseId)
 
       let name: string
       let filename: string
@@ -60,7 +60,7 @@ export const registerExecuteController = () => {
       } else {
         throw new Error('Invalid call of execute:music: No gameId or musicId given')
       }
-      if (gamebase) playMusic(gamebase, name, filename, id, fromGame)
+      if (gamebase) await playMusic(gamebase, name, filename, id, fromGame, user)
     }
   )
 }
