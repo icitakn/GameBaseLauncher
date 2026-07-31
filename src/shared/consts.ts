@@ -28,3 +28,13 @@ export const ALL_YEARS: IdLabelObject[] = [
 ]
 
 export const UNDEFINED_YEARS_MAP = Object.fromEntries(UNDEFINED_YEARS.map((i) => [i.id, i.label]))
+
+export const RATING = (t: (key: string) => string): IdLabelObject[] => [
+  { id: 0, label: t('translation:forms.game.fields.ratings.unknown') },
+  { id: 1, label: t('translation:forms.game.fields.ratings.terrible') },
+  { id: 2, label: t('translation:forms.game.fields.ratings.poor') },
+  { id: 3, label: t('translation:forms.game.fields.ratings.average') },
+  { id: 4, label: t('translation:forms.game.fields.ratings.quite_good') },
+  { id: 5, label: t('translation:forms.game.fields.ratings.very_good') },
+  { id: 6, label: t('translation:forms.game.fields.ratings.classic') }
+]

@@ -37,6 +37,7 @@ import { UUID } from 'crypto'
 import { ExtraDialog } from '@renderer/components/extra-dialog/extra-dialog'
 import { ExtraFileResult } from '@shared/types/file.types'
 import { useGameLauncher } from '@renderer/hooks/useGameLauncher'
+import { DetailRow } from '@renderer/components/common/detail-row'
 
 export interface GamePanelProps {
   selected?: GameDTO | null
@@ -112,7 +113,7 @@ export function GamePanel({ selected, selectedGamebase }: GamePanelProps): React
       try {
         const fullGame = await loadGameById(id, gamebaseId)
         const userData = await window.electron.getGameUserdata(id, gamebaseId)
-        console.log('user', userData)
+        setGameUserdata(userData)
         setSelectedTab(0)
         setGame(fullGame)
       } finally {
@@ -173,25 +174,6 @@ export function GamePanel({ selected, selectedGamebase }: GamePanelProps): React
     }
     return game?.year
   }, [game?.year])
-
-  const InfoLine = ({
-    label,
-    value
-  }: {
-    label: string
-    value: string | number | undefined | null
-  }): ReactElement => {
-    return (
-      <>
-        <Grid2 size={6}>
-          <div>{label}</div>
-        </Grid2>
-        <Grid2 size={6}>
-          <div>{value}</div>
-        </Grid2>
-      </>
-    )
-  }
 
   if (loadingDetail) {
     return (
@@ -398,15 +380,15 @@ export function GamePanel({ selected, selectedGamebase }: GamePanelProps): React
 
           <TabPanel value={selectedTab} index={0} sx={{ overflowY: 'auto', flex: 1 }}>
             <Grid2 container spacing={2} sx={{ overflowY: 'auto', flex: 1 }}>
-              <InfoLine label={t('translation:game.release')} value={selectedYear} />
-              <InfoLine label={t('translation:game.developer')} value={game.developer?.name} />
-              <InfoLine label={t('translation:game.programmer')} value={game.programmer?.name} />
-              <InfoLine label={t('translation:game.musician')} value={game.musician?.name} />
-              <InfoLine label={t('translation:game.artist')} value={game.artist?.name} />
-              <InfoLine label={t('translation:game.publisher')} value={game.publisher?.name} />
-              <InfoLine label={t('translation:game.cracker')} value={game.cracker?.name} />
-              <InfoLine label={t('translation:game.genre')} value={game.genre?.name} />
-              <InfoLine
+              <DetailRow label={t('translation:game.release')} value={selectedYear} />
+              <DetailRow label={t('translation:game.developer')} value={game.developer?.name} />
+              <DetailRow label={t('translation:game.programmer')} value={game.programmer?.name} />
+              <DetailRow label={t('translation:game.musician')} value={game.musician?.name} />
+              <DetailRow label={t('translation:game.artist')} value={game.artist?.name} />
+              <DetailRow label={t('translation:game.publisher')} value={game.publisher?.name} />
+              <DetailRow label={t('translation:game.cracker')} value={game.cracker?.name} />
+              <DetailRow label={t('translation:game.genre')} value={game.genre?.name} />
+              <DetailRow
                 label={t('translation:game.player_number')}
                 value={
                   game.playersFrom && game.playersFrom !== game.playersTo
