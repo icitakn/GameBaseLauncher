@@ -55,19 +55,17 @@ export function ExtraPanel({ selected, selectedGamebase }: ExtraPanelProps): Rea
             {t('translation:buttons.open')}
           </Button>
           <Grid2 container spacing={2} sx={{ overflowY: 'auto' }}>
-            <DetailRow label={t('translation:forms.fields.name')} value={selected?.name} />
-            <DetailRow label={t('translation:extra.game')} value={selected?.game?.name} />
-            <DetailRow label={t('translation:extra.path')} value={selected?.path} />
-            <DetailRow
-              label={t('translation:extra.display_order')}
-              value={selected?.displayOrder}
-            />
-            <DetailRow
-              label={t('translation:extra.type')}
-              value={TYPES.find((type) => type.id === selected?.type)?.label}
-            />
-            <DetailRow label={t('translation:extra.data')} value={selected?.data} />
-            <DetailRow label={t('translation:extra.file_to_run')} value={selected?.fileToRun} />
+            <DetailRow label={t('translation:forms.fields.name')}>{selected?.name}</DetailRow>
+            <DetailRow label={t('translation:extra.game')}>{selected?.game?.name}</DetailRow>
+            <DetailRow label={t('translation:extra.path')}>{selected?.path}</DetailRow>
+            <DetailRow label={t('translation:extra.display_order')}>
+              {selected?.displayOrder}
+            </DetailRow>
+            <DetailRow label={t('translation:extra.type')}>
+              {TYPES.find((type) => type.id === selected?.type)?.label}
+            </DetailRow>
+            <DetailRow label={t('translation:extra.data')}>{selected?.data}</DetailRow>
+            <DetailRow label={t('translation:extra.file_to_run')}>{selected?.fileToRun}</DetailRow>
           </Grid2>
         </Stack>
       )}

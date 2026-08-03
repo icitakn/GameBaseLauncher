@@ -1,20 +1,19 @@
 import { Grid2 } from '@mui/material'
-import { ReactElement } from 'react'
+import { ReactElement, ReactNode } from 'react'
 
-export const DetailRow = ({
-  label,
-  value
-}: {
+type DetailRowProps = {
   label: string
-  value: string | number | undefined | null
-}): ReactElement => {
+  children: ReactNode
+}
+
+export const DetailRow = ({ label, children }: DetailRowProps): ReactElement => {
   return (
     <>
       <Grid2 size={6}>
         <div>{label}</div>
       </Grid2>
       <Grid2 size={6}>
-        <div style={{ wordBreak: 'break-all', overflowWrap: 'break-word' }}>{value}</div>
+        <div style={{ wordBreak: 'break-all', overflowWrap: 'break-word' }}>{children}</div>
       </Grid2>
     </>
   )

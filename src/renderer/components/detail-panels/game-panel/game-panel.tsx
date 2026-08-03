@@ -380,22 +380,21 @@ export function GamePanel({ selected, selectedGamebase }: GamePanelProps): React
 
           <TabPanel value={selectedTab} index={0} sx={{ overflowY: 'auto', flex: 1 }}>
             <Grid2 container spacing={2} sx={{ overflowY: 'auto', flex: 1 }}>
-              <DetailRow label={t('translation:game.release')} value={selectedYear} />
-              <DetailRow label={t('translation:game.developer')} value={game.developer?.name} />
-              <DetailRow label={t('translation:game.programmer')} value={game.programmer?.name} />
-              <DetailRow label={t('translation:game.musician')} value={game.musician?.name} />
-              <DetailRow label={t('translation:game.artist')} value={game.artist?.name} />
-              <DetailRow label={t('translation:game.publisher')} value={game.publisher?.name} />
-              <DetailRow label={t('translation:game.cracker')} value={game.cracker?.name} />
-              <DetailRow label={t('translation:game.genre')} value={game.genre?.name} />
-              <DetailRow
-                label={t('translation:game.player_number')}
-                value={
-                  game.playersFrom && game.playersFrom !== game.playersTo
-                    ? game.playersFrom + ' - ' + game.playersTo
-                    : game.playersFrom
-                }
-              />
+              <DetailRow label={t('translation:game.release')}>{selectedYear}</DetailRow>
+              <DetailRow label={t('translation:game.developer')}>{game.developer?.name}</DetailRow>
+              <DetailRow label={t('translation:game.programmer')}>
+                {game.programmer?.name}
+              </DetailRow>
+              <DetailRow label={t('translation:game.musician')}>{game.musician?.name}</DetailRow>
+              <DetailRow label={t('translation:game.artist')}>{game.artist?.name}</DetailRow>
+              <DetailRow label={t('translation:game.publisher')}>{game.publisher?.name}</DetailRow>
+              <DetailRow label={t('translation:game.cracker')}>{game.cracker?.name}</DetailRow>
+              <DetailRow label={t('translation:game.genre')}>{game.genre?.name}</DetailRow>
+              <DetailRow label={t('translation:game.player_number')}>
+                {game.playersFrom && game.playersFrom !== game.playersTo
+                  ? game.playersFrom + ' - ' + game.playersTo
+                  : game.playersFrom}
+              </DetailRow>
             </Grid2>
           </TabPanel>
           <TabPanel value={selectedTab} index={1} sx={{ overflowY: 'auto', flex: 1 }}>

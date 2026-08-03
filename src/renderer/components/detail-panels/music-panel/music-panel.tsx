@@ -31,7 +31,7 @@ export function MusicPanel({ selected, selectedGamebase }: MusicPanelProps): Rea
             {t('translation:game.music')}
           </Button>
           <Grid2 container spacing={2} sx={{ overflowY: 'auto' }}>
-            <DetailRow label={t('translation:game.musician')} value={selected?.musician?.name} />
+            <DetailRow label={t('translation:game.musician')}>{selected?.musician?.name}</DetailRow>
           </Grid2>
         </Stack>
       )}
