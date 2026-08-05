@@ -26,23 +26,17 @@ export const i18nResources = {
   }
 }
 
-export const InitI18N = (language?: string) => {
-  use(initReactI18next)
-  if (!i18next.isInitialized) {
-    init({
-      lng: language ?? 'en', // if you're using a language detector, do not define the lng option
-      debug: true,
-      resources: {
-        en: {
-          translation: translation_en
-        },
-        de: {
-          translation: translation_de
-        }
-      }
-      // if you see an error like: "Argument of type 'DefaultTFuncReturn' is not assignable to parameter of type xyz"
-      // set returnNull to false (and also in the i18next.d.ts options)
-      // returnNull: false,
-    })
+i18next.use(initReactI18next).init({
+  lng: 'en',
+  fallbackLng: 'en',
+  debug: false,
+  resources: i18nResources
+})
+
+export const setAppLanguage = (language?: string) => {
+  if (language && i18next.language !== language) {
+    i18next.changeLanguage(language)
   }
 }
+
+export default i18next

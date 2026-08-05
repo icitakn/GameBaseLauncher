@@ -2,22 +2,23 @@ import { UUID } from 'crypto'
 import { ipcMain } from 'electron'
 import { loadGamebase } from './gamebase.controller'
 import { getAll, getAllBatched, upsert } from '../services/database.service'
-import { Game } from '../entities/game.entity'
-import { Artist } from '../entities/artist.entity'
-import { Musician } from '../entities/musician.entity'
-import { Programmer } from '../entities/programmer.entity'
-import { Publisher } from '../entities/publisher.entity'
-import { Language } from '../entities/language.entity'
-import { Developer } from '../entities/developer.entity'
-import { Genre } from '../entities/genre.entity'
-import { Rarity } from '../entities/rarity.entity'
-import { License } from '../entities/license.entity'
-import { Cracker } from '../entities/cracker.entity'
-import { Difficulty } from '../entities/difficulty.entity'
+import { Game } from '../entities/main/game.entity'
+import { Artist } from '../entities/main/artist.entity'
+import { Musician } from '../entities/main/musician.entity'
+import { Programmer } from '../entities/main/programmer.entity'
+import { Publisher } from '../entities/main/publisher.entity'
+import { Language } from '../entities/main/language.entity'
+import { Developer } from '../entities/main/developer.entity'
+import { Genre } from '../entities/main/genre.entity'
+import { Rarity } from '../entities/main/rarity.entity'
+import { License } from '../entities/main/license.entity'
+import { Cracker } from '../entities/main/cracker.entity'
+import { Difficulty } from '../entities/main/difficulty.entity'
 import { EntityManager, FindOptions, PopulatePath } from '@mikro-orm/core'
 import { EntityType, GetReferenceFunction } from '@shared/types/database.types'
-import { Extra } from '../entities/extra.entity'
-import { Music } from '../entities/music.entity'
+import { Extra } from '../entities/main/extra.entity'
+import { Music } from '../entities/main/music.entity'
+import { GameUserData } from '../entities/user/game-user-data.entity'
 
 const createGetReference =
   (em: EntityManager): GetReferenceFunction =>
@@ -245,22 +246,23 @@ export const registerEntityController = () => {
   ipcMain.handle(
     'entity:deleteEntity',
     async (_, id: number, type: EntityType, gamebaseId: UUID) => {
-      if (!id || !type) {
-        throw new Error('No id or no type given')
-      }
-      const { db } = await loadGamebase(gamebaseId)
+      if (!id || !type) throw new Error('No id or no type given')
+
+      const { db, user } = await loadGamebase(gamebaseId)
       const em = db.em.fork()
 
       const dbEntity = await em.findOne(type, { id })
+      if (!dbEntity) throw new Error('Entity not found!')
 
-      if (dbEntity) {
-        await em.removeAndFlush(dbEntity)
-      } else {
-        throw new Error('Entity not found!')
+      await em.removeAndFlush(dbEntity)
+
+      if (type === 'Game') {
+        const userEm = user.em.fork()
+        const userData = await userEm.findOne(GameUserData, { gameId: id })
+        if (userData) await userEm.removeAndFlush(userData)
       }
     }
   )
-
   ipcMain.handle('entity:loadExtras', async (_, id: number, gamebaseId: UUID) => {
     const { db } = await loadGamebase(gamebaseId)
     const em = db.em.fork()

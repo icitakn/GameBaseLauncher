@@ -153,6 +153,7 @@
     "rating": "Bewertung",
     "adult": "Erwachsenenspiel",
     "favorite": "Lieblingsspiel",
+    "highscore": "Highscore",
     "notes": "Notizen",
     "pal_ntsc": "PAL/NTSC",
     "messages": {
@@ -217,7 +218,8 @@
         "game": "Spiel",
         "files": "Dateien",
         "version": "Version",
-        "personal": "Persönliches"
+        "personal": "Persönliches",
+        "extras": "Extras"
       }
     }
   },

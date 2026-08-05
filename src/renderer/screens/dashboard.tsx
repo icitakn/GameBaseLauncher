@@ -46,12 +46,21 @@ const Dashboard = () => {
   const { launchGame } = useGameLauncher()
 
   useEffect(() => {
-    if (settings) {
-      const recentlyPlayed = settings?.stats?.gamesPlayed ?? []
+    if (!settings) return
+
+    const loadStats = async () => {
+      const statsList = await Promise.all(
+        settings.gamebases.map((gb) => window.electron.getGamebaseStats(gb))
+      )
+
+      console.log('stats', statsList)
+
+      const recentlyPlayed = statsList.flatMap((stats) => stats.gameSessions)
       recentlyPlayed.sort((a, b) => b.lastPlayedAtMs - a.lastPlayedAtMs)
+
       const totalPlayTime =
-        recentlyPlayed && recentlyPlayed.length > 0
-          ? recentlyPlayed.map((game) => game.playtimeInMs).reduce((acc, val) => acc + val)
+        recentlyPlayed.length > 0
+          ? recentlyPlayed.map((game) => game.playtimeInMs).reduce((acc, val) => acc + val, 0)
           : 0
 
       setStats({
@@ -62,11 +71,12 @@ const Dashboard = () => {
 
       setRecentGames(recentlyPlayed.slice(0, Math.min(recentlyPlayed.length, 10)))
 
-      const recentlyListened = settings?.stats?.musicListenedTo ?? []
+      const recentlyListened = statsList.flatMap((stats) => stats.musicSessions)
       recentlyListened.sort((a, b) => b.lastPlayedAtMs - a.lastPlayedAtMs)
-
       setRecentMusic(recentlyListened.slice(0, Math.min(recentlyListened.length, 10)))
     }
+
+    loadStats()
   }, [settings])
 
   const StatCard = ({
@@ -117,8 +127,8 @@ const Dashboard = () => {
     setModalMsg(t('translation:common.starting') + ' ' + music.name)
     setOpen(true)
     window.electron.playMusic(music.gamebaseId, {
-      gameId: music.fromGame ? music.id : undefined,
-      musicId: music.fromGame ? undefined : music.id
+      gameId: music.fromGame ? music.musicOrGameId : undefined,
+      musicId: music.fromGame ? undefined : music.musicOrGameId
     })
   }
 
@@ -226,9 +236,6 @@ const Dashboard = () => {
                                 icon={faStar}
                                 style={{ fontSize: '14px', color: '#ffc107' }}
                               />
-                              <Typography variant="body2" component="span">
-                                {game.rating}
-                              </Typography>
                             </Box>
                           </Box>
                         }

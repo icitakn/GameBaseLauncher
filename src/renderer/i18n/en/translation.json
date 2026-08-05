@@ -153,6 +153,7 @@
     "rating": "Rating",
     "adult": "Adult Game",
     "favorite": "Favorite Game",
+    "highscore": "Highscore",
     "notes": "Notes",
     "pal_ntsc": "PAL/NTSC",
     "messages": {
@@ -217,7 +218,8 @@
         "game": "Game",
         "files": "Files",
         "version": "Version",
-        "personal": "Personal"
+        "personal": "Personal",
+        "extras": "Extras"
       }
     }
   },

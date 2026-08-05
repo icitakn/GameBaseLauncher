@@ -6,29 +6,11 @@ import { ReactElement, useState } from 'react'
 import { toast } from 'react-toastify'
 import { ExtraDialog } from '@renderer/components/extra-dialog/extra-dialog'
 import { ExtraFileResult } from '@shared/types/file.types'
+import { DetailRow } from '@renderer/components/common/detail-row'
 
 export interface ExtraPanelProps {
   selected?: ExtraDTO | null
   selectedGamebase?: GameBase
-}
-
-const InfoLine = ({
-  label,
-  value
-}: {
-  label: string
-  value: string | number | undefined | null
-}): ReactElement => {
-  return (
-    <>
-      <Grid2 size={6}>
-        <div>{label}</div>
-      </Grid2>
-      <Grid2 size={6}>
-        <div style={{ wordBreak: 'break-all', overflowWrap: 'break-word' }}>{value}</div>
-      </Grid2>
-    </>
-  )
 }
 
 export function ExtraPanel({ selected, selectedGamebase }: ExtraPanelProps): ReactElement {
@@ -73,16 +55,17 @@ export function ExtraPanel({ selected, selectedGamebase }: ExtraPanelProps): Rea
             {t('translation:buttons.open')}
           </Button>
           <Grid2 container spacing={2} sx={{ overflowY: 'auto' }}>
-            <InfoLine label={t('translation:forms.fields.name')} value={selected?.name} />
-            <InfoLine label={t('translation:extra.game')} value={selected?.game?.name} />
-            <InfoLine label={t('translation:extra.path')} value={selected?.path} />
-            <InfoLine label={t('translation:extra.display_order')} value={selected?.displayOrder} />
-            <InfoLine
-              label={t('translation:extra.type')}
-              value={TYPES.find((type) => type.id === selected?.type)?.label}
-            />
-            <InfoLine label={t('translation:extra.data')} value={selected?.data} />
-            <InfoLine label={t('translation:extra.file_to_run')} value={selected?.fileToRun} />
+            <DetailRow label={t('translation:forms.fields.name')}>{selected?.name}</DetailRow>
+            <DetailRow label={t('translation:extra.game')}>{selected?.game?.name}</DetailRow>
+            <DetailRow label={t('translation:extra.path')}>{selected?.path}</DetailRow>
+            <DetailRow label={t('translation:extra.display_order')}>
+              {selected?.displayOrder}
+            </DetailRow>
+            <DetailRow label={t('translation:extra.type')}>
+              {TYPES.find((type) => type.id === selected?.type)?.label}
+            </DetailRow>
+            <DetailRow label={t('translation:extra.data')}>{selected?.data}</DetailRow>
+            <DetailRow label={t('translation:extra.file_to_run')}>{selected?.fileToRun}</DetailRow>
           </Grid2>
         </Stack>
       )}

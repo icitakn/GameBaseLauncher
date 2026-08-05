@@ -1,28 +1,34 @@
 import { readFileSync } from 'fs'
 import { Value } from 'mdb-reader'
 import { DataCache } from '../cache/datacache'
-import { Artist } from '../entities/artist.entity'
-import { Developer } from '../entities/developer.entity'
-import { Genre } from '../entities/genre.entity'
-import { Base } from '../entities/base'
-import { Cracker } from '../entities/cracker.entity'
-import { Difficulty } from '../entities/difficulty.entity'
-import { Language } from '../entities/language.entity'
-import { License } from '../entities/license.entity'
-import { Programmer } from '../entities/programmer.entity'
-import { Publisher } from '../entities/publisher.entity'
-import { Rarity } from '../entities/rarity.entity'
-import { Config } from '../entities/config.entity'
-import { Musician } from '../entities/musician.entity'
-import { Game } from '../entities/game.entity'
-import { Music } from '../entities/music.entity'
-import { Extra } from '../entities/extra.entity'
+import { Artist } from '../entities/main/artist.entity'
+import { Developer } from '../entities/main/developer.entity'
+import { Genre } from '../entities/main/genre.entity'
+import { Base } from '../entities/main/base'
+import { Cracker } from '../entities/main/cracker.entity'
+import { Difficulty } from '../entities/main/difficulty.entity'
+import { Language } from '../entities/main/language.entity'
+import { License } from '../entities/main/license.entity'
+import { Programmer } from '../entities/main/programmer.entity'
+import { Publisher } from '../entities/main/publisher.entity'
+import { Rarity } from '../entities/main/rarity.entity'
+import { Config } from '../entities/main/config.entity'
+import { Musician } from '../entities/main/musician.entity'
+import { Game } from '../entities/main/game.entity'
+import { Music } from '../entities/main/music.entity'
+import { Extra } from '../entities/main/extra.entity'
 import { MikroORM } from '@mikro-orm/better-sqlite'
 import log from 'electron-log'
 import { MessagePort } from 'worker_threads'
 import { GameBase } from '@shared/models/settings.model'
+import { createGameUserDataEntry, Tasks } from './migration.service'
+import { TaskStatus, UserDbState } from '../entities/user/user-db-state.entity'
 
-export async function importData(gamebase: GameBase, db: MikroORM, port: MessagePort) {
+export async function importData(
+  gamebase: GameBase,
+  db: { main: MikroORM; user: MikroORM },
+  port: MessagePort
+) {
   const mdbReader = await import('mdb-reader')
   log.info('mdbReader: ', mdbReader !== undefined)
   if (!gamebase.importFile) {
@@ -56,8 +62,7 @@ export async function importData(gamebase: GameBase, db: MikroORM, port: Message
   }
   log.info('Starting import')
 
-  const em = db.em.fork()
-  log.info('em', em !== undefined)
+  const em = db.main.em.fork()
 
   const persistRow = async (row: object) => {
     em.persist(row)
@@ -217,6 +222,7 @@ export async function importData(gamebase: GameBase, db: MikroORM, port: Message
   const cloneOfCache: DataCache<number> = {}
   const gameCache: DataCache<Game> = {}
   const games = reader.getTable('Games').getData()
+  const userEM = db.user.em.fork()
   for (const game of games) {
     const newGame = new Game()
     newGame.id = game['GA_Id'] as number
@@ -283,7 +289,19 @@ export async function importData(gamebase: GameBase, db: MikroORM, port: Message
     if (game['Sequel']) sequelCache[newGame.id] = game['Sequel'] as number
     if (game['Related']) relatedCache[newGame.id] = game['Related'] as number
     if (game['CloneOf']) cloneOfCache[newGame.id] = game['CloneOf'] as number
+
+    createGameUserDataEntry(newGame, userEM)
   }
+
+  const userDbState = userEM.create(UserDbState, {
+    key: Tasks.USER_DB_INIT,
+    status: TaskStatus.DONE,
+    completedAt: new Date()
+  })
+
+  userEM.persist(userDbState)
+
+  userEM.flush()
 
   // game: prequel, sequel, related, cloneOf
   for (const gameId of Object.keys(prequelCache)) {

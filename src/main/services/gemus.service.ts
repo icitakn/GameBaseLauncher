@@ -1,5 +1,5 @@
 import { Emulator, GameBase } from '@shared/models/settings.model'
-import { Game } from '../entities/game.entity'
+import { Game } from '../entities/main/game.entity'
 import * as child from 'child_process'
 import * as fs from 'fs'
 import log from 'electron-log'

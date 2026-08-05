@@ -129,15 +129,15 @@ const buildGameColumns = (t: (key: string) => string): ColumnOption<GameDTO>[] =
     label: t('translation:game.license'),
     column: relationColumn('license', t('translation:game.license'))
   },
-  {
-    key: 'rating',
-    label: t('translation:game.rating'),
-    column: columnHelper.accessor('rating', {
-      header: t('translation:game.rating'),
-      enableSorting: true,
-      cell: (info) => info.getValue() ?? ''
-    })
-  },
+  // {
+  //   key: 'rating',
+  //   label: t('translation:game.rating'),
+  //   column: columnHelper.accessor('rating', {
+  //     header: t('translation:game.rating'),
+  //     enableSorting: true,
+  //     cell: (info) => info.getValue() ?? ''
+  //   })
+  // },
   {
     key: 'reviewRating',
     label: t('translation:game.review_rating'),
@@ -181,14 +181,14 @@ const buildGameColumns = (t: (key: string) => string): ColumnOption<GameDTO>[] =
       cell: (info) => info.getValue() ?? ''
     })
   },
-  {
-    key: 'fav',
-    label: t('translation:game.favorite'),
-    column: columnHelper.accessor('fav', {
-      header: t('translation:game.favorite'),
-      cell: (info) => (info.getValue() ? '♥' : '')
-    })
-  },
+  // {
+  //   key: 'fav',
+  //   label: t('translation:game.favorite'),
+  //   column: columnHelper.accessor('fav', {
+  //     header: t('translation:game.favorite'),
+  //     cell: (info) => (info.getValue() ? '♥' : '')
+  //   })
+  // },
   {
     key: 'adult',
     label: t('translation:game.adult'),
@@ -262,12 +262,9 @@ export default function Games() {
     difficulty: null,
     cracker: null,
     sidFilename: '',
-    highscore: '',
-    fav: false,
     programmer: null,
     language: null,
     classic: 0,
-    rating: 0,
     palNtsc: 0,
     length: 0,
     trainers: 0,

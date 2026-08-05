@@ -39,12 +39,11 @@ export type GamePlayed = {
   genre: string
   lastPlayedAtMs: number
   playtimeInMs: number
-  rating: number
 }
 
 export type MusicListened = {
   gamebaseId: UUID
-  id: number
+  musicOrGameId: number
   name: string
   lastPlayedAtMs: number
   fromGame: boolean
@@ -58,7 +57,7 @@ export type Settings = {
     entry: number
   }
   gamebases: GameBase[]
-  stats: {
+  stats?: {
     gamesPlayed: GamePlayed[]
     musicListenedTo: MusicListened[]
   }

@@ -6,6 +6,7 @@ import { fileApi } from './api/file.api'
 import { entityApi } from './api/entity.api'
 import { gamebaseApi } from './api/gamebase.api'
 import { executeApi } from './api/execute.api'
+import { userdataApi } from './api/userdata.api'
 
 export type Channels = 'ipc-channel'
 
@@ -29,7 +30,8 @@ const electronHandler = {
   ...fileApi,
   ...entityApi,
   ...gamebaseApi,
-  ...executeApi
+  ...executeApi,
+  ...userdataApi
 }
 
 contextBridge.exposeInMainWorld('electron', electronHandler)

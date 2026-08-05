@@ -1,13 +1,16 @@
 import { ExecutionResult, GameBase } from '@shared/models/settings.model'
-import { Game } from '../entities/game.entity'
-import { Genre } from '../entities/genre.entity'
-import { extract, fileHash, getSettings, normalizePath, saveSettings } from './file.service'
+import { Game } from '../entities/main/game.entity'
+import { Genre } from '../entities/main/genre.entity'
+import { extract, fileHash, normalizePath } from './file.service'
 import { executeGemusScript, loadGemusScript, parseKvPairs, GemusContext } from './gemus.service'
 import * as child from 'child_process'
 import * as fs from 'fs'
 import log from 'electron-log'
 import path from 'path'
 import os from 'os'
+import { MikroORM } from '@mikro-orm/better-sqlite'
+import { GameSession } from '../entities/user/game-session.entity'
+import { MusicSession } from '../entities/user/music-session.entity'
 
 const EXECUTABLE_EXTENSIONS: Record<string, string[]> = {
   win32: ['.exe', '.bat', '.cmd', '.com'],
@@ -49,6 +52,7 @@ function isExecutable(filePath: string): boolean {
 export async function execute(
   gamebase: GameBase,
   game: Game,
+  userDb: MikroORM,
   emulatorId?: string
 ): Promise<ExecutionResult> {
   if (!gamebase || !gamebase.folders || !gamebase.folders.games) {
@@ -127,14 +131,14 @@ export async function execute(
           log.info(`[GEMUS] Exit message: ${scriptResult.exitMessage}`)
         }
         // Still record stats so the game shows up as attempted
-        recordGamePlayed({ gamebase, game, emulatorId: emulator?.id, playTime })
+        await recordGamePlayed({ game, emulatorId: emulator?.id, playTime, userDb })
         return { fileModified: hashAfter !== hashBefore }
       }
 
       // Stats are recorded after the emulator finishes;
       // GEMUS already calls spawnProcess internally in Run_Emulator() /
       // Run_GameFile(). We still track stats here.
-      recordGamePlayed({ gamebase, game, emulatorId: emulator?.id, playTime })
+      await recordGamePlayed({ game, emulatorId: emulator?.id, playTime, userDb })
     } catch (err) {
       log.error(`[GEMUS] Script execution failed for "${game.name}": ${err}`)
       throw err
@@ -163,7 +167,7 @@ export async function execute(
 
   const playTime = new Date().getTime() - startTime
 
-  recordGamePlayed({ gamebase, game, emulatorId: emulator?.id, playTime })
+  await recordGamePlayed({ game, emulatorId: emulator?.id, playTime, userDb })
 
   return { fileModified: hashAfter !== hashBefore }
 }
@@ -179,53 +183,48 @@ const getFullLabel = (genre: Genre): string => {
   return parentLabel ? parentLabel + ' - ' + name : name
 }
 
-function recordGamePlayed({
-  gamebase,
+async function recordGamePlayed({
   game,
   emulatorId,
-  playTime
+  playTime,
+  userDb
 }: {
-  gamebase: GameBase
   game: Game
   emulatorId?: string
   playTime: number
-}): void {
+  userDb: MikroORM
+}) {
   if (!game.id) return
 
-  const settings = getSettings()
-  if (!settings.stats) {
-    settings.stats = { gamesPlayed: [], musicListenedTo: [] }
-  }
+  const userEM = userDb.em.fork()
 
-  const alreadyPlayedIdx = settings.stats.gamesPlayed.findIndex((played) => played.id === game.id)
-  if (alreadyPlayedIdx >= 0) {
-    settings.stats.gamesPlayed[alreadyPlayedIdx].lastPlayedAtMs = new Date().getTime()
-    settings.stats.gamesPlayed[alreadyPlayedIdx].playtimeInMs += playTime
+  const session = await userEM.findOne(GameSession, { gameId: game.id })
+  if (!session) {
+    const newSession = userEM.create(GameSession, {
+      gameId: game.id,
+      lastPlayedAtMs: new Date().getTime(),
+      playtimeInMs: playTime,
+      emulatorId,
+      genre: game.genre ? getFullLabel(game.genre) : 'Unknown',
+      name: game.name || 'Unknown'
+    })
+    userEM.persistAndFlush(newSession)
   } else {
-    settings.stats.gamesPlayed = [
-      ...settings.stats.gamesPlayed,
-      {
-        gamebaseId: gamebase.id,
-        emulatorId,
-        id: game.id,
-        genre: game.genre ? getFullLabel(game.genre) : 'Unknown',
-        lastPlayedAtMs: new Date().getTime(),
-        name: game.name || 'Unknown',
-        playtimeInMs: playTime,
-        rating: game.rating ?? 0
-      }
-    ]
-  }
+    session.lastPlayedAtMs = new Date().getTime()
+    session.playtimeInMs += playTime
 
-  saveSettings(settings)
+    userEM.upsert(session)
+    userEM.flush()
+  }
 }
 
-export function playMusic(
+export async function playMusic(
   gamebase: GameBase,
   name: string,
   fileName: string,
   id: number,
-  fromGame: boolean
+  fromGame: boolean,
+  userDb: MikroORM
 ) {
   if (!gamebase || !gamebase.folders || !gamebase.folders.music) {
     log.error('Music folder is not set')
@@ -255,27 +254,21 @@ export function playMusic(
     }
   )
 
-  const settings = getSettings()
-  if (!settings.stats) {
-    settings.stats = { gamesPlayed: [], musicListenedTo: [] }
-  }
+  const userEM = userDb.em.fork()
 
-  const alreadyPlayedIdx = settings.stats.musicListenedTo.findIndex(
-    (played) => played.id === id && played.name === name
-  )
-  if (alreadyPlayedIdx >= 0) {
-    settings.stats.musicListenedTo[alreadyPlayedIdx].lastPlayedAtMs = new Date().getTime()
+  const session = await userEM.findOne(MusicSession, { musicOrGameId: id, fromGame: fromGame })
+  if (!session) {
+    const newSession = userEM.create(MusicSession, {
+      musicOrGameId: id,
+      lastPlayedAtMs: new Date().getTime(),
+      fromGame,
+      name
+    })
+    userEM.persistAndFlush(newSession)
   } else {
-    settings.stats.musicListenedTo = [
-      ...settings.stats.musicListenedTo,
-      {
-        gamebaseId: gamebase.id,
-        id,
-        lastPlayedAtMs: new Date().getTime(),
-        name,
-        fromGame
-      }
-    ]
+    session.lastPlayedAtMs = new Date().getTime()
+
+    userEM.upsert(session)
+    userEM.flush()
   }
-  saveSettings(settings)
 }
