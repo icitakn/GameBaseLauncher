@@ -31,6 +31,16 @@ export type GameBase = {
   }
 }
 
+export type GamebaseInfo = {
+  majorVersion: number
+  minorVersion: number
+  officialUpdate: number
+  firstLoadMessage: string
+  firstLoadGemusAsk: number
+  databaseName: string
+  gamebaseWindowTitle: string | null
+}
+
 export type GamePlayed = {
   gamebaseId: UUID
   emulatorId?: string

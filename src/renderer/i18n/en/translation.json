@@ -81,7 +81,9 @@
       "gemus_file": "GEMUS script file",
       "repack_games": "Repack unpacked games after playing (if changed)",
       "ask_before": "Ask before repacking",
-      "notify_after": "Notify me on successful repack"
+      "notify_after": "Notify me on successful repack",
+      "version": "Version",
+      "first_load_message": "Info"
     },
     "errors": {
       "name_required": "Please enter a name.",
@@ -103,7 +105,8 @@
       "difficulties": "Difficulties",
       "rarities": "Rarities",
       "licenses": "Licenses",
-      "games": "Games"
+      "games": "Games",
+      "info": "Gamebase info"
     }
   },
   "game": {

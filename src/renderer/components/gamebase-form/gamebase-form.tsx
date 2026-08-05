@@ -1,4 +1,14 @@
-import { Button, Card, CardContent, IconButton, Stack, Tab, Tabs, Typography } from '@mui/material'
+import {
+  Button,
+  Card,
+  CardContent,
+  IconButton,
+  Stack,
+  Tab,
+  Tabs,
+  TextField,
+  Typography
+} from '@mui/material'
 import { useFieldArray, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { t } from 'i18next'
@@ -6,7 +16,7 @@ import { useEffect, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faFile, faFolder, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons'
 import { GamebaseDTO, gamebaseSchema } from '@shared/models/form-schemes.model'
-import { GameBase } from '@shared/models/settings.model'
+import { GameBase, GamebaseInfo } from '@shared/models/settings.model'
 import { useFileDialog } from '@renderer/hooks/useFileDialog'
 import { useConfirmDialog } from '@renderer/hooks/useConfirmDialog'
 import { useNavigate } from 'react-router-dom'
@@ -93,6 +103,18 @@ export function GamebaseForm({ onSubmit, gamebase }: GamebaseFormProps) {
   const handleTabChange = (event: React.SyntheticEvent, newTab: number) => {
     setSelectedTab(newTab)
   }
+
+  const [gamebaseInfo, setGamebaseInfo] = useState<GamebaseInfo | null>(null)
+
+  useEffect(() => {
+    if (gamebase) {
+      window.electron.getGamebaseInfo(gamebase.id).then((info: GamebaseInfo) => {
+        setGamebaseInfo(info)
+      })
+    } else {
+      setGamebaseInfo(null)
+    }
+  }, [gamebase])
 
   const handleEmulatorFileClick = async (index: number, key: 'path' | 'gemusScript') => {
     const selected = await openDialog({
@@ -194,6 +216,7 @@ export function GamebaseForm({ onSubmit, gamebase }: GamebaseFormProps) {
           <Tab label={t('translation:gamebase.tabs.external_apps')} value={1} />
           <Tab label={t('translation:gamebase.tabs.folders')} value={2} />
           <Tab label={t('translation:gamebase.tabs.games')} value={3} />
+          <Tab label={t('translation:gamebase.tabs.info')} value={4} />
         </Tabs>
 
         <TabPanel value={selectedTab} index={0}>
@@ -452,6 +475,33 @@ export function GamebaseForm({ onSubmit, gamebase }: GamebaseFormProps) {
               control={control}
               name="repacking.notifyAfter"
               label={t('translation:gamebase.form_fields.notify_after')}
+            />
+          </Stack>
+        </TabPanel>
+
+        <TabPanel value={selectedTab} index={4}>
+          <Stack spacing={2} sx={{ display: 'flex', flexDirection: 'column' }}>
+            <TextField
+              label={t('translation:gamebase.form_fields.version')}
+              value={
+                gamebaseInfo
+                  ? `${gamebaseInfo.majorVersion}.${gamebaseInfo.minorVersion}.${gamebaseInfo.officialUpdate}`
+                  : ''
+              }
+              slotProps={{ input: { readOnly: true } }}
+              disabled={!gamebaseInfo}
+              fullWidth
+            />
+
+            <TextField
+              label={t('translation:gamebase.form_fields.first_load_message')}
+              value={gamebaseInfo?.firstLoadMessage ?? ''}
+              slotProps={{ input: { readOnly: true } }}
+              disabled={!gamebaseInfo}
+              fullWidth
+              multiline
+              minRows={10}
+              maxRows={20}
             />
           </Stack>
         </TabPanel>
