@@ -9,11 +9,11 @@ type DetailRowProps = {
 export const DetailRow = ({ label, children }: DetailRowProps): ReactElement => {
   return (
     <>
-      <Grid2 size={6}>
-        <div>{label}</div>
+      <Grid2 size={6} sx={{ minWidth: 0 }}>
+        <div style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>{label}</div>
       </Grid2>
-      <Grid2 size={6}>
-        <div style={{ wordBreak: 'break-all', overflowWrap: 'break-word' }}>{children}</div>
+      <Grid2 size={6} sx={{ minWidth: 0 }}>
+        <div style={{ minWidth: 0, overflow: 'hidden' }}>{children}</div>
       </Grid2>
     </>
   )

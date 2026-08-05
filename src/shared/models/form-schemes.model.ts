@@ -160,7 +160,8 @@ export const gameUserDataSchema = object().shape({
   gameId: number().required(),
   rating: number().nullable(),
   favorite: bool().default(false),
-  notes: string().nullable(),
+  comment: string().nullable(),
+  highScore: string().nullable(),
   lastPlayedAt: string().nullable(),
   playCount: number().min(0).default(0)
 })

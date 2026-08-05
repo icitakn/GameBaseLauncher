@@ -51,6 +51,8 @@ export const registerUserDataController = () => {
     const { user } = await loadGamebase(gamebaseId)
     const em = user.em.fork()
 
+    console.log('data', data)
+
     const existing = await em.findOne(GameUserData, { gameId: data.gameId })
 
     if (existing) {

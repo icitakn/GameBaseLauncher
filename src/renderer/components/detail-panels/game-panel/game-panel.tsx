@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   ButtonGroup,
+  Checkbox,
   CircularProgress,
   ClickAwayListener,
   Container,
@@ -20,14 +21,16 @@ import {
   MenuList,
   Paper,
   Popper,
+  Select,
   Stack,
   Tab,
-  Tabs
+  Tabs,
+  TextField
 } from '@mui/material'
 import { t } from 'i18next'
 import { ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'react-toastify'
-import { IMAGE_BASE64_PREFIX, UNDEFINED_YEARS } from '@shared/consts'
+import { IMAGE_BASE64_PREFIX, RATING, UNDEFINED_YEARS } from '@shared/consts'
 import useEntityStore from '@renderer/hooks/useEntityStore'
 import { GameBase } from '@shared/models/settings.model'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -38,7 +41,6 @@ import { ExtraDialog } from '@renderer/components/extra-dialog/extra-dialog'
 import { ExtraFileResult } from '@shared/types/file.types'
 import { useGameLauncher } from '@renderer/hooks/useGameLauncher'
 import { DetailRow } from '@renderer/components/common/detail-row'
-
 export interface GamePanelProps {
   selected?: GameDTO | null
   selectedGamebase?: GameBase
@@ -54,7 +56,14 @@ export function GamePanel({ selected, selectedGamebase }: GamePanelProps): React
 
   const { loadGameById } = useEntityStore()
   const [game, setGame] = useState<GameDTO | null>(null)
+
   const [gameUserdata, setGameUserdata] = useState<GameUserDataDTO | null>(null)
+  const [rating, setRating] = useState<number>(gameUserdata?.rating ?? 0)
+  const [favorite, setFavorite] = useState<boolean>(gameUserdata?.favorite ?? false)
+  const [personalComment, setPersonalComment] = useState(gameUserdata?.comment ?? '')
+  const [highScore, setHighScore] = useState(gameUserdata?.highScore ?? '')
+  const [savingUserdata, setSavingUserdata] = useState(false)
+
   const [loadingDetail, setLoadingDetail] = useState(true)
   const [loadingExtras, setLoadingExtras] = useState(true)
   const [extras, setExtras] = useState<ExtraDTO[]>([])
@@ -124,6 +133,34 @@ export function GamePanel({ selected, selectedGamebase }: GamePanelProps): React
       load(selected.id, selectedGamebase.id)
     }
   }, [loadGameById, selected?.id, selectedGamebase?.id])
+
+  useEffect(() => {
+    setRating(gameUserdata?.rating ?? 0)
+    setFavorite(gameUserdata?.favorite ?? false)
+    setPersonalComment(gameUserdata?.comment ?? '')
+    setHighScore(gameUserdata?.highScore ?? '')
+  }, [gameUserdata])
+
+  const saveGameUserdata = async () => {
+    setSavingUserdata(true)
+    let tmpGameUserdata: GameUserDataDTO | undefined
+    if (selected?.id) {
+      tmpGameUserdata = {
+        gameId: selected.id,
+        favorite: favorite,
+        comment: personalComment,
+        rating: rating,
+        highScore: highScore,
+        playCount: gameUserdata?.playCount ?? 0,
+        lastPlayedAt: gameUserdata?.lastPlayedAt ?? ''
+      }
+    }
+    if (tmpGameUserdata && selectedGamebase) {
+      await window.electron.saveGameUserdata(tmpGameUserdata, selectedGamebase?.id)
+      setGameUserdata(tmpGameUserdata)
+      setSavingUserdata(false)
+    }
+  }
 
   const emulators = selectedGamebase?.emulators ?? []
   const hasMultipleEmulators = emulators.length > 1
@@ -416,7 +453,60 @@ export function GamePanel({ selected, selectedGamebase }: GamePanelProps): React
             )}
           </TabPanel>
           <TabPanel value={selectedTab} index={2} sx={{ overflowY: 'auto', flex: 1 }}>
-            <></>
+            <Grid2 container spacing={2} sx={{ overflowY: 'auto', flex: 1 }}>
+              <DetailRow label={t('translation:game.rating')}>
+                <Select
+                  size="small"
+                  value={rating}
+                  fullWidth
+                  onChange={(e) => setRating(Number(e.target.value))}
+                >
+                  {RATING(t).map((r) => (
+                    <MenuItem key={r.id} value={r.id}>
+                      {r.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </DetailRow>
+              <DetailRow label={t('translation:game.favorite')}>
+                <Checkbox
+                  checked={favorite ?? false}
+                  onChange={(e) => setFavorite(e.target.checked)}
+                />
+              </DetailRow>
+              <DetailRow label={t('translation:game.notes')}>
+                <TextField
+                  fullWidth
+                  id="notes"
+                  multiline
+                  rows={4}
+                  value={personalComment}
+                  onChange={(event) => setPersonalComment(event.target.value)}
+                  variant="outlined"
+                />
+              </DetailRow>
+              <DetailRow label={t('translation:game.highscore')}>
+                <TextField
+                  fullWidth
+                  id="highscore"
+                  multiline
+                  rows={2}
+                  value={highScore}
+                  onChange={(event) => setHighScore(event.target.value)}
+                  variant="outlined"
+                />
+              </DetailRow>
+              <DetailRow label="">
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={saveGameUserdata}
+                  disabled={savingUserdata}
+                >
+                  {t('translation:buttons.save')}
+                </Button>
+              </DetailRow>
+            </Grid2>
           </TabPanel>
         </Stack>
       )}

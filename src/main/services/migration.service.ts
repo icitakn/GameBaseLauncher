@@ -58,7 +58,7 @@ async function initGameSessions(
     const played = settings.stats?.musicListenedTo?.filter((p) => p.gamebaseId === gamebase.id)
     for (const music of played) {
       const session = userEM.create(MusicSession, {
-        musicOrGameId: music.id,
+        musicOrGameId: music['id'], // it was 'id' before the migration
         name: music.name,
         lastPlayedAtMs: music.lastPlayedAtMs,
         fromGame: music.fromGame

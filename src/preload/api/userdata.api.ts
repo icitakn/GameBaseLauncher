@@ -10,5 +10,8 @@ export const userdataApi = {
     ipcRenderer.invoke('userdata:getGamebaseStats', gamebase.id),
 
   getGameUserdata: (gameId: number, gamebaseId: UUID): Promise<GameUserDataDTO> =>
-    ipcRenderer.invoke('userdata:get', gameId, gamebaseId)
+    ipcRenderer.invoke('userdata:get', gameId, gamebaseId),
+
+  saveGameUserdata: (userdata: GameUserDataDTO, gamebaseId: UUID): Promise<void> =>
+    ipcRenderer.invoke('userdata:upsert', userdata, gamebaseId)
 }

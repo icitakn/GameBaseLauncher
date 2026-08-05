@@ -59,16 +59,6 @@ const toRefObject = (entity: { id?: number | null; name?: string | null } | null
 }
 
 export const GameForm = forwardRef<FormHandle, EditFormProps<GameDTO>>(({ selected }, ref) => {
-  const RATING: IdLabelObject[] = [
-    { id: 0, label: t('translation:forms.game.fields.ratings.unknown') },
-    { id: 1, label: t('translation:forms.game.fields.ratings.terrible') },
-    { id: 2, label: t('translation:forms.game.fields.ratings.poor') },
-    { id: 3, label: t('translation:forms.game.fields.ratings.average') },
-    { id: 4, label: t('translation:forms.game.fields.ratings.quite_good') },
-    { id: 5, label: t('translation:forms.game.fields.ratings.very_good') },
-    { id: 6, label: t('translation:forms.game.fields.ratings.classic') }
-  ]
-
   const [selectedTab, setSelectedTab] = useState(0)
 
   const [fileOnDisk, setFileOnDisk] = useState('')
@@ -874,12 +864,6 @@ export const GameForm = forwardRef<FormHandle, EditFormProps<GameDTO>>(({ select
             </TabPanel>
             <TabPanel value={selectedTab} index={3}>
               <Stack direction="column" spacing={2}>
-                <FormSelect
-                  name="rating"
-                  control={control}
-                  label={t('translation:game.rating')}
-                  options={RATING}
-                />
                 <FormCheckbox control={control} name="adult" label={t('translation:game.adult')} />
                 <FormCheckbox control={control} name="fav" label={t('translation:game.favorite')} />
                 <FormTextField
