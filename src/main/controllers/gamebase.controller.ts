@@ -9,6 +9,7 @@ import path from 'node:path'
 import log from 'electron-log'
 
 import createWorker from '../worker?nodeWorker'
+import { Config } from '../entities/main/config.entity'
 
 let currentGamebaseId: UUID
 let db: { main: MikroORM; user: MikroORM }
@@ -87,8 +88,6 @@ export const registerGamebaseController = () => {
   ipcMain.handle('gamebase:editGamebase', async (_, gamebase: GameBase) => {
     const settings = getSettings()
     settings.gamebases = settings.gamebases.map((gb) => (gb.id === gamebase.id ? gamebase : gb))
-    console.log(settings.gamebases)
-    console.log(gamebase)
 
     saveSettings(settings)
   })
@@ -165,6 +164,13 @@ export const registerGamebaseController = () => {
         license: ''
       }
     }
+  })
+
+  ipcMain.handle('gamebase:getInfo', async (_, gamebaseId: UUID) => {
+    const { db } = await loadGamebase(gamebaseId)
+    const dbEM = db.em.fork()
+    const [config] = await dbEM.find(Config, {}, { orderBy: { id: 'DESC' }, limit: 1 })
+    return config ?? null
   })
 
   callMigrateUserDbs()

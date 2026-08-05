@@ -81,7 +81,9 @@
       "gemus_file": "GEMUS Skript Datei",
       "repack_games": "Packe entpackte Spiele nach dem Spielen (falls verändert)",
       "ask_before": "Frage vor dem Packen",
-      "notify_after": "Benachrichtige mich nach erfolgreichem Packen"
+      "notify_after": "Benachrichtige mich nach erfolgreichem Packen",
+      "version": "Version",
+      "first_load_message": "Info"
     },
     "errors": {
       "name_required": "Bitte gib einen Namen ein.",
@@ -103,7 +105,8 @@
       "difficulties": "Schwierigkeitsgrade",
       "rarities": "Raritäten",
       "licenses": "Lizenzen",
-      "games": "Spiele"
+      "games": "Spiele",
+      "info": "Gamebase info"
     }
   },
   "game": {
