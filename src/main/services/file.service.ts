@@ -145,14 +145,6 @@ export function getSettings(): Settings {
   throw new Error('No settings found!')
 }
 
-export function getSettingsFromPath(configPath: string): Settings {
-  if (existsSync(configPath)) {
-    const file = readFileSync(configPath, { encoding: 'utf8', flag: 'r' })
-    return JSON.parse(file)
-  }
-  throw new Error('No settings found!')
-}
-
 export function getOrCreateSettings(): Settings {
   const configPath = getConfigPath()
 
@@ -185,13 +177,6 @@ export function getOrCreateSettings(): Settings {
 
 export function saveSettings(settings: Settings): void {
   const configPath = getConfigPath()
-  writeFileSync(configPath, JSON.stringify(settings), {
-    encoding: 'utf8',
-    flag: 'w'
-  })
-}
-
-export function saveSettingsToPath(settings: Settings, configPath: string): void {
   writeFileSync(configPath, JSON.stringify(settings), {
     encoding: 'utf8',
     flag: 'w'

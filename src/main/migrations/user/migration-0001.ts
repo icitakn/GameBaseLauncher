@@ -1,6 +1,6 @@
 import { Migration } from '@mikro-orm/migrations'
 
-export class Migration_0001 extends Migration {
+export class User_Migration_0001 extends Migration {
   override async up(): Promise<void> {
     this.addSql(
       'CREATE TABLE IF NOT EXISTS GameUserData(game_id INTEGER PRIMARY KEY, rating INTEGER NULL, favorite INTEGER NOT NULL DEFAULT 0, comment TEXT NULL, high_score TEXT NULL, last_played_at TEXT NULL, play_count INTEGER NOT NULL DEFAULT 0);'
