@@ -8,11 +8,11 @@ import {
   MikroORM,
   SqlEntityManager
 } from '@mikro-orm/better-sqlite'
-import { GameBase } from '@shared/models/settings.model'
+import { GameBase, Settings } from '@shared/models/settings.model'
 import { MessagePort } from 'worker_threads'
-import { getSettingsFromPath, saveSettingsToPath } from './file.service'
 import { GameSession } from '../entities/user/game-session.entity'
 import { MusicSession } from '../entities/user/music-session.entity'
+import { existsSync, readFileSync, writeFileSync } from 'fs'
 
 export enum Tasks {
   USER_DB_INIT = 'user_db_init',
@@ -24,6 +24,21 @@ type MigrationFn = (
   db: { main: MikroORM; user: MikroORM },
   configPath: string
 ) => Promise<void>
+
+export function getSettingsFromPath(configPath: string): Settings {
+  if (existsSync(configPath)) {
+    const file = readFileSync(configPath, { encoding: 'utf8', flag: 'r' })
+    return JSON.parse(file)
+  }
+  throw new Error('No settings found!')
+}
+
+export function saveSettingsToPath(settings: Settings, configPath: string): void {
+  writeFileSync(configPath, JSON.stringify(settings), {
+    encoding: 'utf8',
+    flag: 'w'
+  })
+}
 
 const migrations = new Map<Tasks, MigrationFn>([
   [Tasks.USER_DB_INIT, initUserDb],
